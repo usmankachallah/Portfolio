@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { Project, Skill, ContactMessage } from '../types';
 import { PROJECTS as INITIAL_PROJECTS, SKILLS as INITIAL_SKILLS, USMAN_BIO } from '../constants';
@@ -85,7 +84,7 @@ export const useStore = create<AppState>((set) => ({
     { platform: 'GitHub', url: 'https://github.com/usmankachallah', icon: 'github' },
     { platform: 'X', url: 'https://x.com/kachallahfx', icon: 'twitter' },
   ],
-  isAdminView: false,
+  isAdminView: true,
   isAuthenticated: false,
   isChatOpen: false,
   theme: 'futuristic',
