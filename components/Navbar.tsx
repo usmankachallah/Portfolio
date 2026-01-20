@@ -13,10 +13,10 @@ const Navbar: React.FC<Props> = ({ onChatToggle }) => {
           USMAN<span className="text-white">.DEV</span>
         </a>
         <div className="hidden md:flex space-x-8 text-sm uppercase tracking-widest font-medium">
-          <a href="#hero" className="hover:text-blue-400 transition-colors">Origins</a>
-          <a href="#projects" className="hover:text-blue-400 transition-colors">Manifesto</a>
-          <a href="#skills" className="hover:text-blue-400 transition-colors">System</a>
-          <a href="#contact" className="hover:text-blue-400 transition-colors">Connect</a>
+          <a href="#origins" className="hover:text-blue-400 transition-colors">Origins</a>
+          <a href="#manifesto" className="hover:text-blue-400 transition-colors">Manifesto</a>
+          <a href="#system" className="hover:text-blue-400 transition-colors">System</a>
+          <a href="#connect" className="hover:text-blue-400 transition-colors">Connect</a>
         </div>
         <button 
           onClick={onChatToggle}
