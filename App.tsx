@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Origins from './components/Origins';
@@ -11,6 +11,7 @@ import AiChat from './components/AiChat';
 import Background from './components/Background';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
+import NotFound from './components/NotFound';
 import { useStore } from './store/useStore';
 
 const App: React.FC = () => {
@@ -23,6 +24,31 @@ const App: React.FC = () => {
     isChatOpen, 
     toggleChat 
   } = useStore();
+
+  const [is404, setIs404] = useState(false);
+
+  useEffect(() => {
+    // Simple path-based routing detection
+    const checkPath = () => {
+      const path = window.location.pathname;
+      // If path is anything other than root, show 404 (excluding common static file patterns if needed)
+      // Since this is a SPA, we assume only '/' is valid for the main content
+      if (path !== '/' && path !== '') {
+        setIs404(true);
+      } else {
+        setIs404(false);
+      }
+    };
+
+    checkPath();
+    window.addEventListener('popstate', checkPath);
+    return () => window.removeEventListener('popstate', checkPath);
+  }, []);
+
+  // 404 View
+  if (is404) {
+    return <NotFound />;
+  }
 
   // Admin View Logic with Login Protection
   if (isAdminView) {
