@@ -10,11 +10,13 @@ import ProjectModal from './components/ProjectModal';
 import AiChat from './components/AiChat';
 import Background from './components/Background';
 import AdminDashboard from './components/AdminDashboard';
+import AdminLogin from './components/AdminLogin';
 import { useStore } from './store/useStore';
 
 const App: React.FC = () => {
   const { 
     isAdminView, 
+    isAuthenticated,
     toggleAdmin, 
     selectedProject, 
     setSelectedProject, 
@@ -22,7 +24,11 @@ const App: React.FC = () => {
     toggleChat 
   } = useStore();
 
+  // Admin View Logic with Login Protection
   if (isAdminView) {
+    if (!isAuthenticated) {
+      return <AdminLogin />;
+    }
     return (
       <div className="min-h-screen bg-[#02040a] text-cyan-500 font-mono selection:bg-cyan-500 selection:text-black">
         <AdminDashboard />

@@ -9,7 +9,7 @@ const AdminDashboard: React.FC = () => {
     deleteProject, 
     skills, 
     updateSkillLevel, 
-    toggleAdmin, 
+    logout, 
     session 
   } = useStore();
 
@@ -27,10 +27,10 @@ const AdminDashboard: React.FC = () => {
           </p>
         </div>
         <button 
-          onClick={toggleAdmin}
-          className="px-6 py-2 border border-cyan-500/50 hover:bg-cyan-500 hover:text-black transition-all text-xs font-bold uppercase tracking-widest"
+          onClick={logout}
+          className="px-6 py-2 border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-black transition-all text-xs font-bold uppercase tracking-widest"
         >
-          Term_Session [ESC]
+          Logout [CTRL+Q]
         </button>
       </header>
 

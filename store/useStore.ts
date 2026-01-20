@@ -7,6 +7,7 @@ interface AppState {
   projects: Project[];
   skills: Skill[];
   isAdminView: boolean;
+  isAuthenticated: boolean;
   isChatOpen: boolean;
   selectedProject: Project | null;
   session: {
@@ -21,6 +22,8 @@ interface AppState {
   setSkills: (skills: Skill[]) => void;
   updateSkillLevel: (name: string, level: number) => void;
   toggleAdmin: () => void;
+  setAuthenticated: (status: boolean) => void;
+  logout: () => void;
   toggleChat: () => void;
   setSelectedProject: (project: Project | null) => void;
 }
@@ -28,7 +31,8 @@ interface AppState {
 export const useStore = create<AppState>((set) => ({
   projects: INITIAL_PROJECTS,
   skills: INITIAL_SKILLS,
-  isAdminView: false,
+  isAdminView: true, // Set to true by default to open the admin login page
+  isAuthenticated: false,
   isChatOpen: false,
   selectedProject: null,
   session: {
@@ -49,6 +53,8 @@ export const useStore = create<AppState>((set) => ({
     if (!state.isAdminView) window.scrollTo(0, 0);
     return { isAdminView: !state.isAdminView };
   }),
+  setAuthenticated: (status) => set({ isAuthenticated: status }),
+  logout: () => set({ isAuthenticated: false, isAdminView: false }),
   toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
   setSelectedProject: (project) => set({ selectedProject: project }),
 }));
