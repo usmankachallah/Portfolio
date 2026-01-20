@@ -22,3 +22,14 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
 }
+
+export interface ContactMessage {
+  id: string;
+  senderName: string;
+  senderEmail: string;
+  subject: string;
+  body: string;
+  timestamp: string;
+  isRead: boolean;
+  priority: 'low' | 'medium' | 'high';
+}

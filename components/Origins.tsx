@@ -1,8 +1,10 @@
 
 import React from 'react';
-import { USMAN_BIO } from '../constants';
+import { useStore } from '../store/useStore';
 
 const Origins: React.FC = () => {
+  const bio = useStore(state => state.bio);
+
   return (
     <section id="origins" className="min-h-screen py-32 px-6 flex items-center">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -12,7 +14,7 @@ const Origins: React.FC = () => {
             <img 
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800&h=1000" 
               alt="Usman" 
-              className="w-full h-[600px] object-cover rounded-[2.5rem]"
+              className="w-full h-[600px] object-cover rounded-[2.5rem] grayscale group-hover:grayscale-0 transition-all duration-700"
             />
           </div>
         </div>
@@ -25,7 +27,7 @@ const Origins: React.FC = () => {
           
           <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-light">
             <p>
-              {USMAN_BIO}
+              {bio}
             </p>
             <p>
               Driven by the intersection of high-fidelity aesthetics and performance engineering, 
