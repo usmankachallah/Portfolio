@@ -9,6 +9,8 @@ interface SocialLink {
   icon: string;
 }
 
+type Theme = 'futuristic' | 'minimalist';
+
 interface AppState {
   projects: Project[];
   skills: Skill[];
@@ -18,6 +20,7 @@ interface AppState {
   isAdminView: boolean;
   isAuthenticated: boolean;
   isChatOpen: boolean;
+  theme: Theme;
   selectedProject: Project | null;
   session: {
     user: string;
@@ -34,13 +37,15 @@ interface AppState {
   updateBio: (newBio: string) => void;
   updateSocialLink: (platform: string, url: string) => void;
   updateProfile: (name: string, role: string, avatar: string) => void;
-  addMessage: (message: Omit<ContactMessage, 'id' | 'timestamp' | 'isRead'>) => void;
+  addMessage: (message: Omit<ContactMessage, 'id' | 'timestamp' | 'isRead' | 'isArchived'>) => void;
   deleteMessage: (id: string) => void;
   markMessageRead: (id: string) => void;
+  archiveMessage: (id: string) => void;
   toggleAdmin: () => void;
   setAuthenticated: (status: boolean) => void;
   logout: () => void;
   toggleChat: () => void;
+  toggleTheme: () => void;
   setSelectedProject: (project: Project | null) => void;
 }
 
@@ -53,6 +58,7 @@ const INITIAL_MESSAGES: ContactMessage[] = [
     body: "Hi Usman, I saw your Quantum Dashboard project and was blown away by the performance. We're looking for a lead frontend architect for a new stealth startup. Are you open to a neural link sync next week?",
     timestamp: new Date(Date.now() - 3600000).toISOString(),
     isRead: false,
+    isArchived: false,
     priority: 'high'
   },
   {
@@ -63,6 +69,7 @@ const INITIAL_MESSAGES: ContactMessage[] = [
     body: "Hey! I'm the maintainer of a popular 3D UI library. I'd love to have your expertise on our core team for the v5.0 release focusing on React 19 features.",
     timestamp: new Date(Date.now() - 86400000).toISOString(),
     isRead: true,
+    isArchived: false,
     priority: 'medium'
   }
 ];
@@ -77,9 +84,10 @@ export const useStore = create<AppState>((set) => ({
     { platform: 'GitHub', url: 'https://github.com/usmankachallah', icon: 'github' },
     { platform: 'X', url: 'https://x.com/kachallahfx', icon: 'twitter' },
   ],
-  isAdminView: false,
+  isAdminView: true, // Opened by default for the session
   isAuthenticated: false,
   isChatOpen: false,
+  theme: 'futuristic',
   selectedProject: null,
   session: {
     user: 'Usman',
@@ -111,7 +119,8 @@ export const useStore = create<AppState>((set) => ({
         ...message,
         id: `msg_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        isRead: false
+        isRead: false,
+        isArchived: false
       },
       ...state.messages
     ]
@@ -122,6 +131,9 @@ export const useStore = create<AppState>((set) => ({
   markMessageRead: (id) => set((state) => ({
     messages: state.messages.map(m => m.id === id ? { ...m, isRead: true } : m)
   })),
+  archiveMessage: (id) => set((state) => ({
+    messages: state.messages.map(m => m.id === id ? { ...m, isArchived: true } : m)
+  })),
   toggleAdmin: () => set((state) => {
     if (!state.isAdminView) window.scrollTo(0, 0);
     return { isAdminView: !state.isAdminView };
@@ -129,5 +141,8 @@ export const useStore = create<AppState>((set) => ({
   setAuthenticated: (status) => set({ isAuthenticated: status }),
   logout: () => set({ isAuthenticated: false, isAdminView: false }),
   toggleChat: () => set((state) => ({ isChatOpen: !state.isChatOpen })),
+  toggleTheme: () => set((state) => ({ 
+    theme: state.theme === 'futuristic' ? 'minimalist' : 'futuristic' 
+  })),
   setSelectedProject: (project) => set({ selectedProject: project }),
 }));

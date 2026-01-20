@@ -31,5 +31,6 @@ export interface ContactMessage {
   body: string;
   timestamp: string;
   isRead: boolean;
+  isArchived: boolean;
   priority: 'low' | 'medium' | 'high';
 }

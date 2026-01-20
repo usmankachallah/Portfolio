@@ -4,9 +4,11 @@ import { useStore } from '../store/useStore';
 import { ContactMessage } from '../types';
 
 type AdminTab = 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs';
+type MessageFilter = 'active' | 'archived';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('projects');
+  const [messageFilter, setMessageFilter] = useState<MessageFilter>('active');
   const [logs, setLogs] = useState<{ time: string; msg: string; type: 'info' | 'warn' | 'crit' }[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   
@@ -24,12 +26,17 @@ const AdminDashboard: React.FC = () => {
     updateProfile,
     messages,
     deleteMessage,
-    markMessageRead
+    markMessageRead,
+    archiveMessage
   } = useStore();
 
   const [profileName, setProfileName] = useState(session.user);
   const [profileRole, setProfileRole] = useState(session.role);
   const [profileAvatar, setProfileAvatar] = useState(session.avatar);
+
+  const filteredMessages = messages.filter(m => 
+    messageFilter === 'active' ? !m.isArchived : m.isArchived
+  );
 
   const selectedMessage = messages.find(m => m.id === selectedMessageId);
 
@@ -57,6 +64,11 @@ const AdminDashboard: React.FC = () => {
   const handleMessageSelect = (id: string) => {
     setSelectedMessageId(id);
     markMessageRead(id);
+  };
+
+  const handleArchive = (id: string) => {
+    archiveMessage(id);
+    setSelectedMessageId(null);
   };
 
   return (
@@ -96,7 +108,7 @@ const AdminDashboard: React.FC = () => {
           {[
             { id: 'projects', label: 'DEPLOYMENTS' },
             { id: 'skills', label: 'NEURAL_MATRIX' },
-            { id: 'messages', label: 'COMM_LOGS', badge: messages.filter(m => !m.isRead).length },
+            { id: 'messages', label: 'COMM_LOGS', badge: messages.filter(m => !m.isRead && !m.isArchived).length },
             { id: 'system', label: 'CORE_CONFIG' },
             { id: 'profile', label: 'IDENTITY_CORE' },
             { id: 'logs', label: 'SECURITY_LOGS' },
@@ -179,34 +191,51 @@ const AdminDashboard: React.FC = () => {
           {/* Messages View */}
           {activeTab === 'messages' && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full">
-              <h2 className="text-xl font-bold uppercase tracking-tighter mb-10 flex items-center gap-2">
-                <span className="text-cyan-500">_</span>INBOUND_COMMUNICATIONS
-              </h2>
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
+                  <span className="text-cyan-500">_</span>INBOUND_COMMUNICATIONS
+                </h2>
+                <div className="flex bg-black/40 p-1 rounded-lg border border-white/10">
+                   <button 
+                    onClick={() => { setMessageFilter('active'); setSelectedMessageId(null); }}
+                    className={`px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest transition-all rounded ${messageFilter === 'active' ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
+                   >
+                    Active
+                   </button>
+                   <button 
+                    onClick={() => { setMessageFilter('archived'); setSelectedMessageId(null); }}
+                    className={`px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest transition-all rounded ${messageFilter === 'archived' ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
+                   >
+                    Archived
+                   </button>
+                </div>
+              </div>
+              
               <div className="flex flex-col md:flex-row h-[550px] border border-white/10 rounded-2xl overflow-hidden bg-black/60 shadow-2xl">
                 {/* Message List */}
                 <div className="w-full md:w-80 border-r border-white/10 flex flex-col bg-black/40">
                   <div className="p-4 border-b border-white/10 bg-black/20 text-[10px] text-gray-500 uppercase font-bold tracking-widest flex justify-between">
-                    <span>Transmissions</span>
-                    <span>{messages.length} Total</span>
+                    <span>{messageFilter.toUpperCase()} Signals</span>
+                    <span>{filteredMessages.length} Total</span>
                   </div>
                   <div className="flex-1 overflow-y-auto scrollbar-thin">
-                    {messages.length === 0 ? (
-                      <div className="p-12 text-center text-gray-700 text-[10px] uppercase font-bold tracking-widest">No inbound signals.</div>
+                    {filteredMessages.length === 0 ? (
+                      <div className="p-12 text-center text-gray-700 text-[10px] uppercase font-bold tracking-widest">No {messageFilter} signals.</div>
                     ) : (
-                      messages.map(msg => (
+                      filteredMessages.map(msg => (
                         <button 
                           key={msg.id}
                           onClick={() => handleMessageSelect(msg.id)}
                           className={`w-full p-5 border-b border-white/5 text-left transition-all hover:bg-cyan-500/5 relative group ${selectedMessageId === msg.id ? 'bg-cyan-500/10' : ''}`}
                         >
-                          {!msg.isRead && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
+                          {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
                           <div className="flex justify-between items-start mb-1">
-                            <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead ? 'text-cyan-400' : 'text-gray-500'}`}>
+                            <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
                               {msg.senderName.toUpperCase()}
                             </span>
                             <span className="text-[8px] text-gray-700">{new Date(msg.timestamp).toLocaleDateString()}</span>
                           </div>
-                          <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
+                          <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead && !msg.isArchived ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
                           <div className="text-[10px] text-gray-600 truncate leading-relaxed">{msg.body}</div>
                         </button>
                       ))
@@ -244,8 +273,8 @@ const AdminDashboard: React.FC = () => {
                               <span className="text-gray-400">{new Date(selectedMessage.timestamp).toLocaleString()}</span>
                             </div>
                             <div className="flex items-center gap-2 text-right justify-end">
-                              <span className="text-gray-600 uppercase">Encryption:</span>
-                              <span className="text-green-500/60">AES-256-GCM</span>
+                              <span className="text-gray-600 uppercase">Status:</span>
+                              <span className="text-green-500/60">{selectedMessage.isArchived ? 'ARCHIVED' : 'ACTIVE'}</span>
                             </div>
                           </div>
                         </div>
@@ -258,15 +287,20 @@ const AdminDashboard: React.FC = () => {
                       </div>
 
                       <div className="p-8 border-t border-white/10 bg-black/60 flex gap-6">
-                        <button className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl">
-                          SEND_ENCRYPTED_RESPONSE
-                        </button>
+                        {!selectedMessage.isArchived && (
+                          <button 
+                            onClick={() => handleArchive(selectedMessage.id)}
+                            className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl"
+                          >
+                            ARCHIVE_TRANSMISSION
+                          </button>
+                        )}
                         <button 
                           onClick={() => {
                             deleteMessage(selectedMessage.id);
                             setSelectedMessageId(null);
                           }}
-                          className="px-8 py-4 border border-red-500/30 hover:border-red-500/60 text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl"
+                          className={`${selectedMessage.isArchived ? 'flex-1' : 'px-8'} py-4 border border-red-500/30 hover:border-red-500/60 text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl`}
                         >
                           PURGE_SIGNAL
                         </button>
@@ -279,7 +313,7 @@ const AdminDashboard: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
                       </div>
-                      <span className="text-[11px] uppercase tracking-[0.6em] font-black opacity-40">Waiting for inbound data selection</span>
+                      <span className="text-[11px] uppercase tracking-[0.6em] font-black opacity-40">Waiting for {messageFilter} signal selection</span>
                       <div className="mt-4 w-32 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent"></div>
                     </div>
                   )}

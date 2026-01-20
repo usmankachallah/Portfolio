@@ -31,9 +31,12 @@ const App: React.FC = () => {
     // Simple path-based routing detection
     const checkPath = () => {
       const path = window.location.pathname;
-      // If path is anything other than root, show 404 (excluding common static file patterns if needed)
-      // Since this is a SPA, we assume only '/' is valid for the main content
-      if (path !== '/' && path !== '') {
+      
+      // Allow root and /admin paths
+      if (path === '/admin') {
+        if (!isAdminView) toggleAdmin();
+        setIs404(false);
+      } else if (path !== '/' && path !== '') {
         setIs404(true);
       } else {
         setIs404(false);
@@ -43,7 +46,7 @@ const App: React.FC = () => {
     checkPath();
     window.addEventListener('popstate', checkPath);
     return () => window.removeEventListener('popstate', checkPath);
-  }, []);
+  }, [isAdminView, toggleAdmin]);
 
   // 404 View
   if (is404) {
