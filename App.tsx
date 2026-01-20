@@ -11,7 +11,6 @@ import AiChat from './components/AiChat';
 import Background from './components/Background';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
-import NotFound from './components/NotFound';
 import { useStore } from './store/useStore';
 
 const App: React.FC = () => {
@@ -25,8 +24,6 @@ const App: React.FC = () => {
     toggleChat 
   } = useStore();
 
-  const [is404, setIs404] = useState(false);
-
   useEffect(() => {
     // Simple path-based routing detection
     const checkPath = () => {
@@ -35,12 +32,12 @@ const App: React.FC = () => {
       // Allow root and /admin paths
       if (path === '/admin') {
         if (!isAdminView) toggleAdmin();
-        setIs404(false);
       } else if (path === '/' || path === '') {
         if (isAdminView) toggleAdmin(); // Return to home if at root
-        setIs404(false);
       } else {
-        setIs404(true);
+        // Fallback to home for any other paths (effectively closing the 404 page)
+        if (isAdminView) toggleAdmin();
+        window.history.replaceState({}, '', '/');
       }
     };
 
@@ -48,11 +45,6 @@ const App: React.FC = () => {
     window.addEventListener('popstate', checkPath);
     return () => window.removeEventListener('popstate', checkPath);
   }, [isAdminView, toggleAdmin]);
-
-  // 404 View
-  if (is404) {
-    return <NotFound />;
-  }
 
   // Admin View Logic with Login Protection
   if (isAdminView) {
