@@ -41,6 +41,7 @@ interface AppState {
   deleteMessage: (id: string) => void;
   markMessageRead: (id: string) => void;
   archiveMessage: (id: string) => void;
+  updateMessagePriority: (id: string, priority: 'low' | 'medium' | 'high') => void;
   toggleAdmin: () => void;
   setAuthenticated: (status: boolean) => void;
   logout: () => void;
@@ -84,7 +85,7 @@ export const useStore = create<AppState>((set) => ({
     { platform: 'GitHub', url: 'https://github.com/usmankachallah', icon: 'github' },
     { platform: 'X', url: 'https://x.com/kachallahfx', icon: 'twitter' },
   ],
-  isAdminView: true, // Opened by default for the session
+  isAdminView: false,
   isAuthenticated: false,
   isChatOpen: false,
   theme: 'futuristic',
@@ -133,6 +134,9 @@ export const useStore = create<AppState>((set) => ({
   })),
   archiveMessage: (id) => set((state) => ({
     messages: state.messages.map(m => m.id === id ? { ...m, isArchived: true } : m)
+  })),
+  updateMessagePriority: (id, priority) => set((state) => ({
+    messages: state.messages.map(m => m.id === id ? { ...m, priority } : m)
   })),
   toggleAdmin: () => set((state) => {
     if (!state.isAdminView) window.scrollTo(0, 0);

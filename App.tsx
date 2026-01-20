@@ -36,10 +36,11 @@ const App: React.FC = () => {
       if (path === '/admin') {
         if (!isAdminView) toggleAdmin();
         setIs404(false);
-      } else if (path !== '/' && path !== '') {
-        setIs404(true);
-      } else {
+      } else if (path === '/' || path === '') {
+        if (isAdminView) toggleAdmin(); // Return to home if at root
         setIs404(false);
+      } else {
+        setIs404(true);
       }
     };
 

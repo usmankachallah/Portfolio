@@ -27,7 +27,8 @@ const AdminDashboard: React.FC = () => {
     messages,
     deleteMessage,
     markMessageRead,
-    archiveMessage
+    archiveMessage,
+    updateMessagePriority
   } = useStore();
 
   const [profileName, setProfileName] = useState(session.user);
@@ -69,6 +70,16 @@ const AdminDashboard: React.FC = () => {
   const handleArchive = (id: string) => {
     archiveMessage(id);
     setSelectedMessageId(null);
+  };
+
+  const handlePriorityChange = (id: string, priority: 'low' | 'medium' | 'high') => {
+    updateMessagePriority(id, priority);
+    const newLog = { 
+      time: new Date().toLocaleTimeString(), 
+      msg: `Signal priority recalibrated: ${id} -> ${priority.toUpperCase()}`, 
+      type: 'info' as const 
+    };
+    setLogs(prev => [newLog, ...prev]);
   };
 
   return (
@@ -230,9 +241,16 @@ const AdminDashboard: React.FC = () => {
                         >
                           {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
                           <div className="flex justify-between items-start mb-1">
-                            <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
-                              {msg.senderName.toUpperCase()}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                {msg.senderName.toUpperCase()}
+                              </span>
+                              <span className={`w-1 h-1 rounded-full ${
+                                msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' :
+                                msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_5px_#eab308]' :
+                                'bg-cyan-500'
+                              }`}></span>
+                            </div>
                             <span className="text-[8px] text-gray-700">{new Date(msg.timestamp).toLocaleDateString()}</span>
                           </div>
                           <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead && !msg.isArchived ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
@@ -247,34 +265,39 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex-1 flex flex-col bg-black/20">
                   {selectedMessage ? (
                     <div className="flex flex-col h-full animate-in fade-in duration-300">
-                      <div className="p-8 border-b border-white/10 flex justify-between items-start bg-black/40">
-                        <div>
-                          <div className="flex items-center gap-4 mb-4">
-                            <h3 className="text-xl font-bold text-white tracking-tight">{selectedMessage.subject}</h3>
-                            <span className={`text-[9px] px-3 py-1 rounded-full uppercase font-black tracking-widest ${
-                              selectedMessage.priority === 'high' ? 'bg-red-500/20 text-red-500 border border-red-500/30' :
-                              selectedMessage.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' :
-                              'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                            }`}>
-                              {selectedMessage.priority}_PRIORITY
-                            </span>
+                      <div className="p-8 border-b border-white/10 flex flex-col gap-6 bg-black/40">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xl font-bold text-white tracking-tight mb-4">{selectedMessage.subject}</h3>
+                            <div className="grid grid-cols-1 gap-y-2 text-[10px] font-mono">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600 uppercase">Origin:</span>
+                                <span className="text-cyan-500/80">{selectedMessage.senderName} &lt;{selectedMessage.senderEmail}&gt;</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-600 uppercase">Timestamp:</span>
+                                <span className="text-gray-400">{new Date(selectedMessage.timestamp).toLocaleString()}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-[10px] font-mono">
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600 uppercase">Origin:</span>
-                              <span className="text-cyan-500/80">{selectedMessage.senderName} &lt;{selectedMessage.senderEmail}&gt;</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-right justify-end">
-                              <span className="text-gray-600 uppercase">Signal_ID:</span>
-                              <span className="text-blue-500/60">#{selectedMessage.id.split('_')[1]}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600 uppercase">Timestamp:</span>
-                              <span className="text-gray-400">{new Date(selectedMessage.timestamp).toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-right justify-end">
-                              <span className="text-gray-600 uppercase">Status:</span>
-                              <span className="text-green-500/60">{selectedMessage.isArchived ? 'ARCHIVED' : 'ACTIVE'}</span>
+                          <div className="flex flex-col items-end gap-3">
+                            <span className="text-[8px] text-gray-600 uppercase font-bold tracking-widest">Adjust Priority:</span>
+                            <div className="flex bg-black/60 p-1 rounded-lg border border-white/10 gap-1">
+                              {(['low', 'medium', 'high'] as const).map((p) => (
+                                <button
+                                  key={p}
+                                  onClick={() => handlePriorityChange(selectedMessage.id, p)}
+                                  className={`px-3 py-1 text-[9px] uppercase font-black tracking-widest transition-all rounded ${
+                                    selectedMessage.priority === p 
+                                      ? p === 'high' ? 'bg-red-500 text-black shadow-[0_0_10px_#ef4444]' :
+                                        p === 'medium' ? 'bg-yellow-500 text-black shadow-[0_0_10px_#eab308]' :
+                                        'bg-cyan-500 text-black shadow-[0_0_10px_#06b6d4]'
+                                      : 'text-gray-600 hover:text-white'
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))}
                             </div>
                           </div>
                         </div>
