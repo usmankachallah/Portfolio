@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ProjectCard from './ProjectCard';
-import { PROJECTS } from '../constants';
+import { useStore } from '../store/useStore';
 import { Project } from '../types';
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
 }
 
 const Manifesto: React.FC<Props> = ({ onProjectSelect }) => {
+  const projects = useStore((state) => state.projects);
+
   return (
     <section id="manifesto" className="min-h-screen py-32 px-6 relative">
       <div className="max-w-7xl mx-auto">
@@ -23,7 +25,7 @@ const Manifesto: React.FC<Props> = ({ onProjectSelect }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PROJECTS.map((project, index) => (
+          {projects.map((project, index) => (
             <div 
               key={project.id} 
               className="animate-in fade-in slide-in-from-bottom-10" 

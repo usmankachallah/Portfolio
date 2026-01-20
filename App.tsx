@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Origins from './components/Origins';
@@ -9,20 +9,32 @@ import Connect from './components/Connect';
 import ProjectModal from './components/ProjectModal';
 import AiChat from './components/AiChat';
 import Background from './components/Background';
-import { Project } from './types';
+import AdminDashboard from './components/AdminDashboard';
+import { useStore } from './store/useStore';
 
 const App: React.FC = () => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const { 
+    isAdminView, 
+    toggleAdmin, 
+    selectedProject, 
+    setSelectedProject, 
+    isChatOpen, 
+    toggleChat 
+  } = useStore();
 
-  const toggleChat = () => setIsChatOpen(prev => !prev);
+  if (isAdminView) {
+    return (
+      <div className="min-h-screen bg-[#02040a] text-cyan-500 font-mono selection:bg-cyan-500 selection:text-black">
+        <AdminDashboard />
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-transparent relative ${selectedProject ? 'overflow-hidden' : ''}`}>
-      {/* Dynamic Background Layer */}
       <Background />
 
-      <Navbar onChatToggle={toggleChat} />
+      <Navbar onChatToggle={toggleChat} onAdminToggle={toggleAdmin} isAdminView={isAdminView} />
       
       <main className="relative z-10">
         <Hero />
@@ -32,11 +44,20 @@ const App: React.FC = () => {
         <Connect />
       </main>
 
-      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-[10px] uppercase tracking-[0.5em] relative z-10">
-        <p>© 2025 USMAN // FRONTEND ARCHITECT // ALL SYSTEMS OPERATIONAL</p>
+      <footer className="py-12 border-t border-white/5 text-center relative z-10">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-gray-600 text-[10px] uppercase tracking-[0.5em]">
+            © 2025 USMAN // FRONTEND ARCHITECT // ALL SYSTEMS OPERATIONAL
+          </p>
+          <button 
+            onClick={toggleAdmin}
+            className="text-[9px] text-blue-500/40 hover:text-blue-400 transition-colors uppercase tracking-[0.2em] font-bold"
+          >
+            [ Initiate System Override ]
+          </button>
+        </div>
       </footer>
 
-      {/* Modals & AI */}
       <ProjectModal 
         project={selectedProject} 
         onClose={() => setSelectedProject(null)} 

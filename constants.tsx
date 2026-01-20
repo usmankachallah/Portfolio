@@ -31,7 +31,7 @@ export const PROJECTS: Project[] = [
     solution: 'Architected with Next.js App Router and used Three.js for interactive product visualizations, resulting in a 40% increase in user engagement.',
     tags: ['Next.js', 'TypeScript', 'Three.js', 'Stripe'],
     image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800&h=450',
-    liveLink: 'https://github.com/facebook/react',
+    liveLink: 'https://example.com/neon-commerce',
     sourceLink: 'https://github.com/facebook/react'
   },
   {
