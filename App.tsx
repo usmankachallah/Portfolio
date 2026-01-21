@@ -6,6 +6,7 @@ import Origins from './components/Origins.tsx';
 import Manifesto from './components/Manifesto.tsx';
 import System from './components/System.tsx';
 import Connect from './components/Connect.tsx';
+import Footer from './components/Footer.tsx';
 import ProjectModal from './components/ProjectModal.tsx';
 import AiChat from './components/AiChat.tsx';
 import Background from './components/Background.tsx';
@@ -64,19 +65,7 @@ const App: React.FC = () => {
         <Connect />
       </main>
 
-      <footer className="py-12 border-t border-white/5 text-center relative z-10">
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-gray-600 text-[10px] uppercase tracking-[0.5em]">
-            © 2025 USMAN // FRONTEND ARCHITECT // ALL SYSTEMS OPERATIONAL
-          </p>
-          <button 
-            onClick={toggleAdmin}
-            className="text-[9px] text-blue-500/40 hover:text-blue-400 transition-colors uppercase tracking-[0.2em] font-bold"
-          >
-            [ Initiate System Override ]
-          </button>
-        </div>
-      </footer>
+      <Footer onAdminToggle={toggleAdmin} />
 
       <ProjectModal 
         project={selectedProject} 
