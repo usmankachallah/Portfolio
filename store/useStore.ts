@@ -16,6 +16,7 @@ interface AppState {
   skills: Skill[];
   messages: ContactMessage[];
   bio: string;
+  aiInstruction: string;
   socialLinks: SocialLink[];
   isAdminView: boolean;
   isAuthenticated: boolean;
@@ -32,10 +33,12 @@ interface AppState {
   // Actions
   setProjects: (projects: Project[]) => void;
   addProject: (project: Project) => void;
+  updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
   setSkills: (skills: Skill[]) => void;
   updateSkillLevel: (name: string, level: number) => void;
   updateBio: (newBio: string) => void;
+  updateAiInstruction: (instruction: string) => void;
   updateSocialLink: (platform: string, url: string) => void;
   updateProfile: (name: string, role: string, avatar: string) => void;
   addMessage: (message: Omit<ContactMessage, 'id' | 'timestamp' | 'isRead' | 'isArchived'>) => void;
@@ -76,11 +79,21 @@ const INITIAL_MESSAGES: ContactMessage[] = [
   }
 ];
 
+const DEFAULT_AI_INSTRUCTION = `
+You are Usman's personal AI Assistant. Your goal is to represent Usman to potential employers or collaborators.
+Usman is a world-class Senior Frontend Engineer specialized in building high-performance, futuristic user interfaces.
+Be professional, modern, and slightly futuristic in your tone. 
+Keep answers concise and helpful. 
+If asked about Usman's skills, mention React, HTML, CSS, and JS prominently.
+Always maintain a helpful and tech-forward persona.
+`;
+
 export const useStore = create<AppState>((set) => ({
   projects: INITIAL_PROJECTS,
   skills: INITIAL_SKILLS,
   messages: INITIAL_MESSAGES,
   bio: USMAN_BIO,
+  aiInstruction: DEFAULT_AI_INSTRUCTION,
   socialLinks: [
     { platform: 'LinkedIn', url: 'https://linkedin.com/in/kachallahfx', icon: 'linkedin' },
     { platform: 'GitHub', url: 'https://github.com/usmankachallah', icon: 'github' },
@@ -100,6 +113,9 @@ export const useStore = create<AppState>((set) => ({
 
   setProjects: (projects) => set({ projects }),
   addProject: (project) => set((state) => ({ projects: [project, ...state.projects] })),
+  updateProject: (updatedProject) => set((state) => ({
+    projects: state.projects.map((p) => (p.id === updatedProject.id ? updatedProject : p))
+  })),
   deleteProject: (id) => set((state) => ({
     projects: state.projects.filter((p) => p.id !== id)
   })),
@@ -108,6 +124,7 @@ export const useStore = create<AppState>((set) => ({
     skills: state.skills.map((s) => s.name === name ? { ...s, level } : s)
   })),
   updateBio: (newBio) => set({ bio: newBio }),
+  updateAiInstruction: (aiInstruction) => set({ aiInstruction }),
   updateSocialLink: (platform, url) => set((state) => ({
     socialLinks: state.socialLinks.map(link => 
       link.platform === platform ? { ...link, url } : link

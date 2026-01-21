@@ -3,24 +3,28 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { ContactMessage, Project } from '../types';
 
-type AdminTab = 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs';
+type AdminTab = 'overview' | 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs';
 type MessageFilter = 'active' | 'archived';
 
 const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('projects');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [messageFilter, setMessageFilter] = useState<MessageFilter>('active');
   const [logs, setLogs] = useState<{ time: string; msg: string; type: 'info' | 'warn' | 'crit' }[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   
   const { 
     projects, 
     addProject,
+    updateProject,
     deleteProject, 
     skills, 
     updateSkillLevel, 
     bio,
     updateBio,
+    aiInstruction,
+    updateAiInstruction,
     socialLinks,
     updateSocialLink,
     logout, 
@@ -61,6 +65,7 @@ const AdminDashboard: React.FC = () => {
       { time: '08:42:15', msg: 'Inbound packet filtering active (Level 4).', type: 'info' as const },
       { time: '09:12:03', msg: 'Attempted unauthorized terminal access detected at IP 192.168.1.1.', type: 'warn' as const },
       { time: '10:05:59', msg: 'Automatic bio-recalibration sequence initiated.', type: 'info' as const },
+      { time: '10:45:12', msg: 'CRITICAL: Database core temperature rising. Cooling protocol required.', type: 'crit' as const },
     ];
     setLogs(initialLogs);
   }, []);
@@ -96,14 +101,38 @@ const AdminDashboard: React.FC = () => {
     setLogs(prev => [newLog, ...prev]);
   };
 
-  const handleAddProject = (e: React.FormEvent) => {
+  const handleSaveProject = (e: React.FormEvent) => {
     e.preventDefault();
-    const newProject: Project = {
-      ...projectForm as Project,
-      id: `proj_${Date.now()}`,
-    };
-    addProject(newProject);
+    if (editingProjectId) {
+      updateProject({
+        ...projectForm as Project,
+        id: editingProjectId,
+      });
+      const newLog = { 
+        time: new Date().toLocaleTimeString(), 
+        msg: `Deployment recalibrated: ${projectForm.title}`, 
+        type: 'info' as const 
+      };
+      setLogs(prev => [newLog, ...prev]);
+    } else {
+      const newProject: Project = {
+        ...projectForm as Project,
+        id: `proj_${Date.now()}`,
+      };
+      addProject(newProject);
+      const newLog = { 
+        time: new Date().toLocaleTimeString(), 
+        msg: `New deployment successful: ${newProject.title}`, 
+        type: 'info' as const 
+      };
+      setLogs(prev => [newLog, ...prev]);
+    }
+    resetProjectForm();
+  };
+
+  const resetProjectForm = () => {
     setIsAddingProject(false);
+    setEditingProjectId(null);
     setProjectForm({
       title: '',
       description: '',
@@ -115,13 +144,48 @@ const AdminDashboard: React.FC = () => {
       challenges: [],
       solution: ''
     });
-    const newLog = { 
-      time: new Date().toLocaleTimeString(), 
-      msg: `New deployment successful: ${newProject.title}`, 
-      type: 'info' as const 
-    };
-    setLogs(prev => [newLog, ...prev]);
   };
+
+  const startEditProject = (project: Project) => {
+    setProjectForm({
+      title: project.title,
+      description: project.description,
+      fullDescription: project.fullDescription,
+      image: project.image,
+      liveLink: project.liveLink,
+      sourceLink: project.sourceLink,
+      tags: project.tags,
+      challenges: project.challenges,
+      solution: project.solution
+    });
+    setEditingProjectId(project.id);
+    setIsAddingProject(true);
+  };
+
+  const renderLogIcon = (type: 'info' | 'warn' | 'crit') => {
+    switch (type) {
+      case 'crit':
+        return (
+          <svg className="w-3 h-3 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'warn':
+        return (
+          <svg className="w-3 h-3 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        );
+      default:
+        return (
+          <svg className="w-3 h-3 text-cyan-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+    }
+  };
+
+  const unreadCount = messages.filter(m => !m.isRead && !m.isArchived).length;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500 font-mono">
@@ -158,9 +222,10 @@ const AdminDashboard: React.FC = () => {
         {/* Navigation HUD */}
         <aside className="lg:w-72 space-y-2">
           {[
+            { id: 'overview', label: 'SYSTEM_OVERVIEW' },
             { id: 'projects', label: 'DEPLOYMENTS' },
             { id: 'skills', label: 'NEURAL_MATRIX' },
-            { id: 'messages', label: 'COMM_LOGS', badge: messages.filter(m => !m.isRead && !m.isArchived).length },
+            { id: 'messages', label: 'COMM_LOGS', badge: unreadCount },
             { id: 'system', label: 'CORE_CONFIG' },
             { id: 'profile', label: 'IDENTITY_CORE' },
             { id: 'logs', label: 'SECURITY_LOGS' },
@@ -177,7 +242,7 @@ const AdminDashboard: React.FC = () => {
               <div className="relative z-10 flex justify-between items-center text-xs uppercase font-bold tracking-widest">
                 <div className="flex items-center gap-3">
                   <span>{tab.label}</span>
-                  {tab.badge && tab.badge > 0 && (
+                  {tab.badge !== undefined && tab.badge > 0 && (
                     <span className="bg-cyan-500 text-black text-[8px] px-1.5 py-0.5 rounded-full font-black">
                       {tab.badge}
                     </span>
@@ -207,12 +272,73 @@ const AdminDashboard: React.FC = () => {
         <main className="flex-1 glass p-8 rounded-3xl border border-white/5 min-h-[650px] relative overflow-hidden bg-black/40">
           <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[60px] rounded-full"></div>
           
+          {/* Overview View */}
+          {activeTab === 'overview' && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
+              <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
+                <span className="text-cyan-500">_</span>CORE_SYSTEM_METRICS
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-6 border border-white/5 rounded-2xl bg-cyan-500/5 flex flex-col gap-4">
+                  <span className="text-[10px] text-cyan-500/60 uppercase tracking-widest font-bold">Total_Deployments</span>
+                  <div className="text-4xl font-bold text-white">{projects.length}</div>
+                </div>
+                <div className="p-6 border border-white/5 rounded-2xl bg-purple-500/5 flex flex-col gap-4">
+                  <span className="text-[10px] text-purple-500/60 uppercase tracking-widest font-bold">Neural_Connections</span>
+                  <div className="text-4xl font-bold text-white">{skills.length}</div>
+                </div>
+                <div className="p-6 border border-white/5 rounded-2xl bg-green-500/5 flex flex-col gap-4">
+                  <span className="text-[10px] text-green-500/60 uppercase tracking-widest font-bold">Active_Signals</span>
+                  <div className="text-4xl font-bold text-white">{unreadCount}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
+                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-6 flex justify-between">
+                    <span>Recent_Signal_Intercepts</span>
+                    <button onClick={() => setActiveTab('messages')} className="text-[9px] hover:text-white transition-colors">VIEW_ALL</button>
+                  </h3>
+                  <div className="space-y-4">
+                    {messages.slice(0, 4).map(msg => (
+                      <div key={msg.id} className="flex justify-between items-center p-3 border-b border-white/5 hover:bg-white/5 transition-all group">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-gray-300 group-hover:text-cyan-400 transition-colors">{msg.senderName}</span>
+                          <span className="text-[9px] text-gray-600 font-mono">{new Date(msg.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <span className={`w-1.5 h-1.5 rounded-full ${msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' : msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_5px_#eab308]' : 'bg-blue-500 shadow-[0_0_5px_#3b82f6]'}`}></span>
+                      </div>
+                    ))}
+                    {messages.length === 0 && <div className="text-[10px] text-gray-700 italic">Static. No inbound signals detected.</div>}
+                  </div>
+                </div>
+
+                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
+                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-6">Neural_Sync_Status</h3>
+                  <div className="space-y-6">
+                    {skills.slice(0, 4).map(skill => (
+                      <div key={skill.name} className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-bold text-gray-400">
+                          <span>{skill.name.toUpperCase()}</span>
+                          <span className="text-cyan-500">{skill.level}%</span>
+                        </div>
+                        <div className="h-1 bg-gray-900 rounded-full overflow-hidden">
+                          <div className="h-full bg-cyan-500" style={{ width: `${skill.level}%` }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Projects View */}
           {activeTab === 'projects' && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-center mb-10">
                 <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                  <span className="text-cyan-500">_</span>{isAddingProject ? 'INITIATE_NEW_DEPLOYMENT' : 'DEPLOYED_MODULES'}
+                  <span className="text-cyan-500">_</span>{editingProjectId ? 'RECONFIGURE_MODULE' : isAddingProject ? 'INITIATE_NEW_DEPLOYMENT' : 'DEPLOYED_MODULES'}
                 </h2>
                 {!isAddingProject && (
                   <button 
@@ -225,7 +351,7 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {isAddingProject ? (
-                <form onSubmit={handleAddProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto">
+                <form onSubmit={handleSaveProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] text-cyan-500 uppercase font-bold">Module_Title</label>
@@ -314,11 +440,11 @@ const AdminDashboard: React.FC = () => {
                       type="submit"
                       className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl"
                     >
-                      COMMIT_TO_GRID
+                      {editingProjectId ? 'APPLY_RECONFIG' : 'COMMIT_TO_GRID'}
                     </button>
                     <button 
                       type="button"
-                      onClick={() => setIsAddingProject(false)}
+                      onClick={resetProjectForm}
                       className="px-10 py-4 border border-white/10 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl"
                     >
                       ABORT
@@ -339,7 +465,12 @@ const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex gap-3">
-                        <button className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest">Configure</button>
+                        <button 
+                          onClick={() => startEditProject(project)}
+                          className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest"
+                        >
+                          Edit
+                        </button>
                         <button onClick={() => deleteProject(project.id)} className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest">Purge</button>
                       </div>
                     </div>
@@ -387,24 +518,28 @@ const AdminDashboard: React.FC = () => {
                         <button 
                           key={msg.id}
                           onClick={() => handleMessageSelect(msg.id)}
-                          className={`w-full p-5 border-b border-white/5 text-left transition-all hover:bg-cyan-500/5 relative group ${selectedMessageId === msg.id ? 'bg-cyan-500/10' : ''}`}
+                          className={`w-full p-5 border-b border-white/5 text-left transition-all hover:bg-cyan-500/5 relative group flex items-stretch gap-4 ${selectedMessageId === msg.id ? 'bg-cyan-500/10' : ''}`}
                         >
-                          {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
-                                {msg.senderName.toUpperCase()}
-                              </span>
-                              <span className={`w-1 h-1 rounded-full ${
-                                msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' :
-                                msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_5px_#eab308]' :
-                                'bg-cyan-500'
-                              }`}></span>
+                          {/* Priority Indicator Bar */}
+                          <div className={`w-1 flex-shrink-0 rounded-full my-1 ${
+                            msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' :
+                            msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' :
+                            'bg-blue-500 shadow-[0_0_8px_#3b82f6]'
+                          }`}></div>
+                          
+                          <div className="flex-1 min-w-0 py-1">
+                            {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                  {msg.senderName.toUpperCase()}
+                                </span>
+                              </div>
+                              <span className="text-[8px] text-gray-700">{new Date(msg.timestamp).toLocaleDateString()}</span>
                             </div>
-                            <span className="text-[8px] text-gray-700">{new Date(msg.timestamp).toLocaleDateString()}</span>
+                            <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead && !msg.isArchived ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
+                            <div className="text-[10px] text-gray-600 truncate leading-relaxed">{msg.body}</div>
                           </div>
-                          <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead && !msg.isArchived ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
-                          <div className="text-[10px] text-gray-600 truncate leading-relaxed">{msg.body}</div>
                         </button>
                       ))
                     )}
@@ -441,7 +576,7 @@ const AdminDashboard: React.FC = () => {
                                     selectedMessage.priority === p 
                                       ? p === 'high' ? 'bg-red-500 text-black shadow-[0_0_10px_#ef4444]' :
                                         p === 'medium' ? 'bg-yellow-500 text-black shadow-[0_0_10px_#eab308]' :
-                                        'bg-cyan-500 text-black shadow-[0_0_10px_#06b6d4]'
+                                        'bg-blue-500 text-black shadow-[0_0_10px_#3b82f6]'
                                       : 'text-gray-600 hover:text-white'
                                   }`}
                                 >
@@ -517,21 +652,39 @@ const AdminDashboard: React.FC = () => {
 
           {/* Core System View */}
           {activeTab === 'system' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-12">
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-12 h-full overflow-y-auto pr-4 scrollbar-thin">
               <div>
                 <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-cyan-400">
                   <span className="text-cyan-500">_</span>NARRATIVE_CORE_DATA
                 </h2>
                 <div className="space-y-4">
                    <label className="text-[10px] text-cyan-500 uppercase font-bold">System Bio / Narrative</label>
-                   <textarea value={bio} onChange={(e) => updateBio(e.target.value)} rows={6} className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed" />
+                   <textarea value={bio} onChange={(e) => updateBio(e.target.value)} rows={4} className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed" />
                 </div>
               </div>
+
+              <div>
+                <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-purple-400">
+                  <span className="text-purple-500">_</span>NEURAL_ASSISTANT_CONFIG
+                </h2>
+                <div className="space-y-4">
+                   <label className="text-[10px] text-purple-500 uppercase font-bold">AI_System_Instruction</label>
+                   <textarea 
+                    value={aiInstruction} 
+                    onChange={(e) => updateAiInstruction(e.target.value)} 
+                    rows={6} 
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 transition-colors resize-none leading-relaxed font-mono" 
+                    placeholder="Describe how the AI should behave..."
+                  />
+                  <p className="text-[9px] text-gray-600 uppercase">Warning: Changes to the neural logic will take effect immediately upon next user query.</p>
+                </div>
+              </div>
+
               <div>
                 <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-cyan-400">
                   <span className="text-cyan-500">_</span>NEURAL_COMM_LINKS
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
                   {socialLinks.map(link => (
                     <div key={link.platform} className="p-5 border border-white/5 rounded-xl bg-black/20">
                       <span className="text-[10px] text-cyan-500 uppercase font-bold mb-4 block">{link.platform} Module</span>
@@ -609,20 +762,26 @@ const AdminDashboard: React.FC = () => {
                 </h2>
                 <div className="flex-1 bg-black/60 rounded-2xl border border-white/5 p-6 font-mono text-xs overflow-y-auto space-y-3 custom-scrollbar">
                    {logs.map((log, i) => (
-                     <div key={i} className="flex gap-4 group">
+                     <div key={i} className="flex gap-4 group items-start">
                         <span className="text-gray-600 flex-shrink-0">[{log.time}]</span>
-                        <span className={`flex-1 ${
-                          log.type === 'crit' ? 'text-red-500 animate-pulse' : 
-                          log.type === 'warn' ? 'text-yellow-500' : 
-                          'text-cyan-500/80'
-                        }`}>
-                          {log.msg}
-                        </span>
+                        <div className="flex gap-2 items-start flex-1">
+                          {renderLogIcon(log.type)}
+                          <span className={`flex-1 ${
+                            log.type === 'crit' ? 'text-red-500 animate-pulse' : 
+                            log.type === 'warn' ? 'text-yellow-500' : 
+                            'text-cyan-500/80'
+                          }`}>
+                            {log.msg}
+                          </span>
+                        </div>
                      </div>
                    ))}
-                   <div className="flex gap-4 animate-pulse">
+                   <div className="flex gap-4 animate-pulse items-center">
                       <span className="text-gray-600 flex-shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                      <span className="text-cyan-400">Listening for inbound transmissions...</span>
+                      <div className="flex gap-2 items-center">
+                        <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
+                        <span className="text-cyan-400">Listening for inbound transmissions...</span>
+                      </div>
                    </div>
                 </div>
             </div>

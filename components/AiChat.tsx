@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getAiResponse } from '../services/geminiService';
 import { ChatMessage } from '../types';
+import { useStore } from '../store/useStore';
 
 interface Props {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const AiChat: React.FC<Props> = ({ isOpen, onToggle }) => {
+  const aiInstruction = useStore(state => state.aiInstruction);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'model', text: "Welcome. I am Usman's neural proxy. How can I assist you in exploring his capabilities today?" }
   ]);
@@ -30,7 +32,7 @@ const AiChat: React.FC<Props> = ({ isOpen, onToggle }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
-    const response = await getAiResponse(userMsg);
+    const response = await getAiResponse(userMsg, aiInstruction);
     setMessages(prev => [...prev, { role: 'model', text: response }]);
     setIsLoading(false);
   };
