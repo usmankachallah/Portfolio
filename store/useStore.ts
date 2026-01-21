@@ -10,6 +10,7 @@ interface SocialLink {
 }
 
 type Theme = 'futuristic' | 'minimalist';
+type ViewMode = 'carousel' | 'grid';
 
 interface AppState {
   projects: Project[];
@@ -22,6 +23,7 @@ interface AppState {
   isAuthenticated: boolean;
   isChatOpen: boolean;
   theme: Theme;
+  projectsViewMode: ViewMode;
   selectedProject: Project | null;
   session: {
     user: string;
@@ -51,6 +53,7 @@ interface AppState {
   logout: () => void;
   toggleChat: () => void;
   toggleTheme: () => void;
+  setProjectsViewMode: (mode: ViewMode) => void;
   setSelectedProject: (project: Project | null) => void;
 }
 
@@ -103,6 +106,7 @@ export const useStore = create<AppState>((set) => ({
   isAuthenticated: false,
   isChatOpen: false,
   theme: 'futuristic',
+  projectsViewMode: 'carousel',
   selectedProject: null,
   session: {
     user: 'Usman',
@@ -167,5 +171,6 @@ export const useStore = create<AppState>((set) => ({
   toggleTheme: () => set((state) => ({ 
     theme: state.theme === 'futuristic' ? 'minimalist' : 'futuristic' 
   })),
+  setProjectsViewMode: (projectsViewMode) => set({ projectsViewMode }),
   setSelectedProject: (project) => set({ selectedProject: project }),
 }));

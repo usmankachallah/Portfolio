@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { useStore } from '../store/useStore';
-import { ContactMessage, Project } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { useStore } from '../store/useStore.ts';
+import { Project } from '../types.ts';
 
-type AdminTab = 'overview' | 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs';
+type AdminTab = 'overview' | 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs' | 'analytics';
 type MessageFilter = 'active' | 'archived';
 
 const AdminDashboard: React.FC = () => {
@@ -14,6 +14,8 @@ const AdminDashboard: React.FC = () => {
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { 
     projects, 
     addProject,
@@ -70,15 +72,35 @@ const AdminDashboard: React.FC = () => {
     setLogs(initialLogs);
   }, []);
 
+  const logSystemEvent = (msg: string, type: 'info' | 'warn' | 'crit' = 'info') => {
+    const newLog = { 
+      time: new Date().toLocaleTimeString(), 
+      msg, 
+      type 
+    };
+    setLogs(prev => [newLog, ...prev]);
+  };
+
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(profileName, profileRole, profileAvatar);
-    const newLog = { 
-      time: new Date().toLocaleTimeString(), 
-      msg: `Identity core updated: ${profileName} // ${profileRole}`, 
-      type: 'info' as const 
-    };
-    setLogs(prev => [newLog, ...prev]);
+    logSystemEvent(`Identity core updated: ${profileName} // ${profileRole}`);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileAvatar(reader.result as string);
+        logSystemEvent(`Local image buffer loaded into identity core: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleMessageSelect = (id: string) => {
@@ -93,12 +115,7 @@ const AdminDashboard: React.FC = () => {
 
   const handlePriorityChange = (id: string, priority: 'low' | 'medium' | 'high') => {
     updateMessagePriority(id, priority);
-    const newLog = { 
-      time: new Date().toLocaleTimeString(), 
-      msg: `Signal priority recalibrated: ${id} -> ${priority.toUpperCase()}`, 
-      type: 'info' as const 
-    };
-    setLogs(prev => [newLog, ...prev]);
+    logSystemEvent(`Signal priority recalibrated: ${id} -> ${priority.toUpperCase()}`);
   };
 
   const handleSaveProject = (e: React.FormEvent) => {
@@ -108,24 +125,14 @@ const AdminDashboard: React.FC = () => {
         ...projectForm as Project,
         id: editingProjectId,
       });
-      const newLog = { 
-        time: new Date().toLocaleTimeString(), 
-        msg: `Deployment recalibrated: ${projectForm.title}`, 
-        type: 'info' as const 
-      };
-      setLogs(prev => [newLog, ...prev]);
+      logSystemEvent(`Deployment recalibrated: ${projectForm.title}`);
     } else {
       const newProject: Project = {
         ...projectForm as Project,
         id: `proj_${Date.now()}`,
       };
       addProject(newProject);
-      const newLog = { 
-        time: new Date().toLocaleTimeString(), 
-        msg: `New deployment successful: ${newProject.title}`, 
-        type: 'info' as const 
-      };
-      setLogs(prev => [newLog, ...prev]);
+      logSystemEvent(`New deployment successful: ${newProject.title}`);
     }
     resetProjectForm();
   };
@@ -160,6 +167,14 @@ const AdminDashboard: React.FC = () => {
     });
     setEditingProjectId(project.id);
     setIsAddingProject(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePurgeProject = (id: string, title: string) => {
+    if (confirm(`INITIATE PURGE: Are you sure you want to remove ${title} from the grid?`)) {
+      deleteProject(id);
+      logSystemEvent(`Deployment purged from grid: ${title}`, 'warn');
+    }
   };
 
   const renderLogIcon = (type: 'info' | 'warn' | 'crit') => {
@@ -186,6 +201,82 @@ const AdminDashboard: React.FC = () => {
   };
 
   const unreadCount = messages.filter(m => !m.isRead && !m.isArchived).length;
+
+  const NAV_ITEMS = [
+    { 
+      id: 'overview', 
+      label: 'SYSTEM_OVERVIEW', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'analytics', 
+      label: 'ANALYTICS_CORE', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'projects', 
+      label: 'DEPLOYMENTS', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'skills', 
+      label: 'NEURAL_MATRIX', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'messages', 
+      label: 'COMM_LOGS', 
+      badge: unreadCount,
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'system', 
+      label: 'CORE_CONFIG', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.44c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.44c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'profile', 
+      label: 'IDENTITY_CORE', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        </svg>
+      )
+    },
+    { 
+      id: 'logs', 
+      label: 'SECURITY_LOGS', 
+      icon: (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M13 3H6c-1.1 0-2 .9-2 2v14c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V9l-7-7zm0 1.5L18.5 10H13V4.5zM17 19H7v-2h10v2zm0-4H7v-2h10v2zm-3-4H7V9h7v2z"/>
+        </svg>
+      )
+    },
+  ];
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500 font-mono">
@@ -221,18 +312,13 @@ const AdminDashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Navigation HUD */}
         <aside className="lg:w-72 space-y-2">
-          {[
-            { id: 'overview', label: 'SYSTEM_OVERVIEW' },
-            { id: 'projects', label: 'DEPLOYMENTS' },
-            { id: 'skills', label: 'NEURAL_MATRIX' },
-            { id: 'messages', label: 'COMM_LOGS', badge: unreadCount },
-            { id: 'system', label: 'CORE_CONFIG' },
-            { id: 'profile', label: 'IDENTITY_CORE' },
-            { id: 'logs', label: 'SECURITY_LOGS' },
-          ].map((tab) => (
+          {NAV_ITEMS.map((tab) => (
             <button 
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
+              onClick={() => {
+                setActiveTab(tab.id as AdminTab);
+                if (tab.id === 'analytics') logSystemEvent('Telemetry scan sequence initiated.');
+              }}
               className={`w-full text-left px-6 py-4 border relative group overflow-hidden transition-all ${
                 activeTab === tab.id 
                   ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' 
@@ -241,6 +327,9 @@ const AdminDashboard: React.FC = () => {
             >
               <div className="relative z-10 flex justify-between items-center text-xs uppercase font-bold tracking-widest">
                 <div className="flex items-center gap-3">
+                  <span className={`${activeTab === tab.id ? 'text-cyan-400' : 'text-gray-600 group-hover:text-cyan-400/70'} transition-colors`}>
+                    {tab.icon}
+                  </span>
                   <span>{tab.label}</span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className="bg-cyan-500 text-black text-[8px] px-1.5 py-0.5 rounded-full font-black">
@@ -333,6 +422,136 @@ const AdminDashboard: React.FC = () => {
             </div>
           )}
 
+          {/* Analytics View */}
+          {activeTab === 'analytics' && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
+              <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
+                <span className="text-cyan-500">_</span>TELEMETRY_CORE_STREAM
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-5 border border-white/10 rounded-2xl bg-cyan-500/5 group">
+                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Neural_Traffic</span>
+                  <div className="text-3xl font-bold text-white mb-1">12,842</div>
+                  <span className="text-[10px] text-green-400 font-mono tracking-tighter flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                    </svg>
+                    +12.4% vs prev_epoch
+                  </span>
+                </div>
+                <div className="p-5 border border-white/10 rounded-2xl bg-purple-500/5 group">
+                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Packet_Flow</span>
+                  <div className="text-3xl font-bold text-white mb-1">45,109</div>
+                  <span className="text-[10px] text-green-400 font-mono tracking-tighter flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                    </svg>
+                    +8.2% vs prev_epoch
+                  </span>
+                </div>
+                <div className="p-5 border border-white/10 rounded-2xl bg-red-500/5 group">
+                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Dissipation_Rate</span>
+                  <div className="text-3xl font-bold text-white mb-1">24.1%</div>
+                  <span className="text-[10px] text-red-400 font-mono tracking-tighter flex items-center gap-1">
+                    <svg className="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                    </svg>
+                    -3.1% (Stability Increased)
+                  </span>
+                </div>
+                <div className="p-5 border border-white/10 rounded-2xl bg-blue-500/5 group">
+                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Sync_Duration</span>
+                  <div className="text-3xl font-bold text-white mb-1">04:12</div>
+                  <span className="text-[10px] text-blue-400 font-mono tracking-tighter">Avg_Session_Units</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 p-8 border border-white/5 rounded-[2rem] bg-black/40 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-500/50 to-cyan-500/0 opacity-30"></div>
+                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-12 flex justify-between">
+                    <span>Active_Neural_Signal_Density</span>
+                    <span className="text-gray-600 font-mono text-[9px]">Last_24_Cycles</span>
+                  </h3>
+                  
+                  <div className="flex items-end justify-between h-48 gap-2">
+                    {[35, 65, 45, 85, 95, 75, 45, 65, 55, 35, 25, 65, 85, 45, 35, 95, 85, 75, 55, 45, 65, 85, 95, 65].map((h, i) => (
+                      <div key={i} className="flex-1 group relative">
+                        <div 
+                          className={`w-full rounded-t-sm transition-all duration-700 delay-[${i * 20}ms] group-hover:bg-white bg-cyan-500/20`}
+                          style={{ height: `${h}%` }}
+                        >
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono">
+                            {h}k
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-6 text-[8px] text-gray-700 font-mono border-t border-white/5 pt-4">
+                    <span>00:00</span>
+                    <span>06:00</span>
+                    <span>12:00</span>
+                    <span>18:00</span>
+                    <span>23:59</span>
+                  </div>
+                </div>
+
+                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
+                  <h3 className="text-xs font-bold text-purple-500 uppercase tracking-[0.2em] mb-8">Access_Geometries</h3>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-gray-400">DESKTOP_ACCESS</span>
+                        <span className="text-purple-400">65%</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 shadow-[0_0_10px_#a855f7]" style={{ width: '65%' }}></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-gray-400">MOBILE_ACCESS</span>
+                        <span className="text-cyan-400">28%</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]" style={{ width: '28%' }}></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-gray-400">NEURAL_DOCK</span>
+                        <span className="text-gray-300">7%</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-gray-600" style={{ width: '7%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-12 p-5 border border-white/5 rounded-2xl bg-white/5">
+                    <span className="text-[9px] text-gray-600 uppercase font-black block mb-4 tracking-widest">Top_Ingress_Points</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-[10px] items-center">
+                        <span className="text-gray-500 truncate mr-2">/manifesto</span>
+                        <span className="text-white font-mono">14.2k</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] items-center">
+                        <span className="text-gray-500 truncate mr-2">/hero</span>
+                        <span className="text-white font-mono">11.8k</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] items-center">
+                        <span className="text-gray-500 truncate mr-2">/system_engine</span>
+                        <span className="text-white font-mono">4.1k</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Projects View */}
           {activeTab === 'projects' && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
@@ -351,7 +570,14 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {isAddingProject ? (
-                <form onSubmit={handleSaveProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto">
+                <form onSubmit={handleSaveProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto pb-20">
+                  {editingProjectId && (
+                    <div className="p-4 border border-cyan-500/30 bg-cyan-500/10 rounded-xl mb-6 flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">ACTIVE_EDIT_MODE: {projectForm.title}</span>
+                      <button type="button" onClick={resetProjectForm} className="text-[9px] text-gray-500 hover:text-white uppercase font-bold tracking-widest">Abort_Edit</button>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] text-cyan-500 uppercase font-bold">Module_Title</label>
@@ -435,6 +661,28 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Development_Challenges (Comma separated)</label>
+                    <input 
+                      type="text" 
+                      value={projectForm.challenges?.join(', ')}
+                      onChange={(e) => setProjectForm({...projectForm, challenges: e.target.value.split(',').map(t => t.trim())})}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                      placeholder="Challenge 1, Challenge 2..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Solution_Matrix</label>
+                    <textarea 
+                      rows={3}
+                      value={projectForm.solution}
+                      onChange={(e) => setProjectForm({...projectForm, solution: e.target.value})}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed"
+                      placeholder="How were challenges overcome..."
+                    />
+                  </div>
+
                   <div className="flex gap-4 pt-4">
                     <button 
                       type="submit"
@@ -467,11 +715,16 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex gap-3">
                         <button 
                           onClick={() => startEditProject(project)}
-                          className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest"
+                          className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest rounded-lg"
                         >
                           Edit
                         </button>
-                        <button onClick={() => deleteProject(project.id)} className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest">Purge</button>
+                        <button 
+                          onClick={() => handlePurgeProject(project.id, project.title)}
+                          className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest rounded-lg"
+                        >
+                          Purge
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -704,21 +957,44 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <form onSubmit={handleProfileUpdate} className="space-y-8">
                 <div className="flex items-center gap-8 mb-12 p-6 border border-cyan-500/10 rounded-2xl bg-cyan-500/5">
-                  <div className="relative group">
+                  <div 
+                    onClick={triggerFileInput}
+                    className="relative group cursor-pointer"
+                  >
                     <img src={profileAvatar} alt="Avatar Preview" className="w-24 h-24 rounded-2xl object-cover border-2 border-cyan-500/30" />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                       <span className="text-[8px] text-cyan-400 font-bold uppercase">Sync Img</span>
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                       <svg className="w-6 h-6 text-cyan-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                       </svg>
+                       <span className="text-[8px] text-cyan-400 font-bold uppercase">Upload</span>
                     </div>
                   </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                  />
                   <div className="flex-1 space-y-4">
                     <div>
                       <label className="text-[10px] text-gray-500 uppercase block mb-1">Avatar_Source_URI</label>
-                      <input 
-                        type="text" 
-                        value={profileAvatar} 
-                        onChange={(e) => setProfileAvatar(e.target.value)} 
-                        className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-blue-300 focus:outline-none focus:border-cyan-500/50"
-                      />
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={profileAvatar.startsWith('data:') ? 'LOCAL_BUFFER_LOADED' : profileAvatar} 
+                          onChange={(e) => setProfileAvatar(e.target.value)} 
+                          className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-blue-300 focus:outline-none focus:border-cyan-500/50"
+                          placeholder="https://..."
+                        />
+                        <button 
+                          type="button"
+                          onClick={triggerFileInput}
+                          className="px-3 py-2 border border-cyan-500/30 text-[9px] uppercase font-bold text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                        >
+                          Local_File
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
