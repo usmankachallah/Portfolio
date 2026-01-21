@@ -13,6 +13,7 @@ const AdminDashboard: React.FC = () => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [systemLoad, setSystemLoad] = useState({ cpu: 42, mem: 68 });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,7 +62,15 @@ const AdminDashboard: React.FC = () => {
 
   const selectedMessage = messages.find(m => m.id === selectedMessageId);
 
+  // Simulate real-time system fluctuations
   useEffect(() => {
+    const interval = setInterval(() => {
+      setSystemLoad({
+        cpu: Math.floor(40 + Math.random() * 15),
+        mem: Math.floor(60 + Math.random() * 10)
+      });
+    }, 3000);
+
     const initialLogs = [
       { time: '08:42:11', msg: 'Neural gateway handshake successful.', type: 'info' as const },
       { time: '08:42:15', msg: 'Inbound packet filtering active (Level 4).', type: 'info' as const },
@@ -70,6 +79,7 @@ const AdminDashboard: React.FC = () => {
       { time: '10:45:12', msg: 'CRITICAL: Database core temperature rising. Cooling protocol required.', type: 'crit' as const },
     ];
     setLogs(initialLogs);
+    return () => clearInterval(interval);
   }, []);
 
   const logSystemEvent = (msg: string, type: 'info' | 'warn' | 'crit' = 'info') => {
@@ -278,32 +288,61 @@ const AdminDashboard: React.FC = () => {
     },
   ];
 
+  const CyberPanel: React.FC<{ children: React.ReactNode; className?: string; title?: string }> = ({ children, className = '', title }) => (
+    <div className={`relative glass border border-white/10 rounded-2xl overflow-hidden group ${className}`}>
+      {/* Corner Brackets */}
+      <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-500/40 group-hover:border-cyan-500 transition-colors"></div>
+      <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cyan-500/40 group-hover:border-cyan-500 transition-colors"></div>
+      <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cyan-500/40 group-hover:border-cyan-500 transition-colors"></div>
+      <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-500/40 group-hover:border-cyan-500 transition-colors"></div>
+      
+      {title && (
+        <div className="bg-white/5 border-b border-white/5 px-6 py-3 flex justify-between items-center">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400">{title}</span>
+          <div className="flex gap-1">
+             <div className="w-1.5 h-1.5 bg-cyan-500/20 rounded-full"></div>
+             <div className="w-1.5 h-1.5 bg-cyan-500/40 rounded-full"></div>
+             <div className="w-1.5 h-1.5 bg-cyan-500/60 rounded-full"></div>
+          </div>
+        </div>
+      )}
+      <div className="p-6">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500 font-mono">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500 font-mono text-gray-400">
       {/* Header HUD */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 border-b border-cyan-500/20 pb-8 gap-6">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-cyan-500/20 pb-8 gap-6 relative">
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-cyan-500/5 blur-[80px] pointer-events-none"></div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tighter mb-2 flex items-center gap-3 text-cyan-500">
-            <span className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse"></span>
-            USMAN_OS <span className="text-gray-600 font-light text-xl">v4.0.2</span>
+          <h1 className="text-3xl font-bold tracking-tighter mb-2 flex items-center gap-3 text-cyan-500 font-futuristic">
+            <span className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_10px_#06b6d4]"></span>
+            USMAN_OS <span className="text-gray-600 font-light text-xl tracking-normal">v4.0.2-STABLE</span>
           </h1>
-          <p className="text-xs text-cyan-500/60 uppercase tracking-widest">
-            Session: {session.user} // UID: {session.role.toUpperCase()}
-          </p>
+          <div className="flex gap-4">
+            <p className="text-[10px] text-cyan-500/60 uppercase tracking-widest font-black">
+              Session_ID: {session.user.toUpperCase()}
+            </p>
+            <p className="text-[10px] text-purple-500/60 uppercase tracking-widest font-black">
+              Access_Lvl: {session.role.toUpperCase()}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-6">
-           <div className="hidden md:flex items-center gap-3 pr-6 border-r border-white/10">
-              <img src={session.avatar} alt="Admin" className="w-10 h-10 rounded-full border border-cyan-500/30 object-cover" />
+           <div className="hidden lg:flex items-center gap-6 pr-6 border-r border-white/10">
               <div className="flex flex-col text-right">
-                <span className="text-[10px] text-gray-500 uppercase">System Time</span>
-                <span className="text-xs text-cyan-400">{new Date().toLocaleTimeString()}</span>
+                <span className="text-[9px] text-gray-600 uppercase font-black">Sync_Rate</span>
+                <span className="text-xs text-green-400 font-mono">99.9%_OPTIMIZED</span>
               </div>
+              <img src={session.avatar} alt="Admin" className="w-12 h-12 rounded-xl border border-cyan-500/30 object-cover shadow-[0_0_15px_rgba(6,182,212,0.1)]" />
            </div>
            <button 
             onClick={logout}
-            className="px-6 py-2 border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-black transition-all text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+            className="group relative px-6 py-2 border border-red-500/30 text-red-500 hover:text-black transition-all text-[10px] font-black uppercase tracking-[0.2em] overflow-hidden rounded-lg"
           >
-            TERMINATE_SESSION
+            <span className="relative z-10">TERM_SESSION</span>
+            <div className="absolute inset-0 bg-red-500 translate-y-full group-hover:translate-y-0 transition-transform"></div>
           </button>
         </div>
       </header>
@@ -311,7 +350,7 @@ const AdminDashboard: React.FC = () => {
       {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Navigation HUD */}
-        <aside className="lg:w-72 space-y-2">
+        <aside className="lg:w-64 space-y-2">
           {NAV_ITEMS.map((tab) => (
             <button 
               key={tab.id}
@@ -319,235 +358,198 @@ const AdminDashboard: React.FC = () => {
                 setActiveTab(tab.id as AdminTab);
                 if (tab.id === 'analytics') logSystemEvent('Telemetry scan sequence initiated.');
               }}
-              className={`w-full text-left px-6 py-4 border relative group overflow-hidden transition-all ${
+              className={`w-full text-left px-5 py-4 border relative group overflow-hidden transition-all rounded-xl ${
                 activeTab === tab.id 
-                  ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' 
-                  : 'border-white/5 text-gray-500 hover:border-cyan-500/30'
+                  ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
+                  : 'border-white/5 text-gray-500 hover:border-cyan-500/30 hover:bg-white/5'
               }`}
             >
-              <div className="relative z-10 flex justify-between items-center text-xs uppercase font-bold tracking-widest">
+              <div className="relative z-10 flex justify-between items-center text-[10px] uppercase font-black tracking-widest">
                 <div className="flex items-center gap-3">
                   <span className={`${activeTab === tab.id ? 'text-cyan-400' : 'text-gray-600 group-hover:text-cyan-400/70'} transition-colors`}>
                     {tab.icon}
                   </span>
                   <span>{tab.label}</span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="bg-cyan-500 text-black text-[8px] px-1.5 py-0.5 rounded-full font-black">
+                    <span className="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded flex items-center justify-center font-black animate-pulse">
                       {tab.badge}
                     </span>
                   )}
                 </div>
-                {activeTab === tab.id && <span className="w-1.5 h-1.5 bg-cyan-500 animate-ping"></span>}
+                {activeTab === tab.id && <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-ping"></div>}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
           ))}
           
-          <div className="mt-12 glass p-6 rounded-2xl border border-white/5">
-             <div className="text-[10px] text-gray-500 mb-4 uppercase tracking-[0.2em]">Neural Status</div>
-             <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                   <span className="text-[10px] text-cyan-500/80">LATENCY</span>
-                   <span className="text-xs text-green-400">14MS</span>
+          <div className="mt-12 glass p-6 rounded-2xl border border-white/5 bg-black/40">
+             <div className="text-[9px] text-gray-600 mb-6 uppercase tracking-[0.3em] font-black flex justify-between">
+               <span>System_Health</span>
+               <span className="text-cyan-500">Live</span>
+             </div>
+             <div className="space-y-6">
+                <div className="space-y-2">
+                   <div className="flex justify-between items-center text-[9px] font-bold">
+                      <span className="text-gray-500">CORE_SYNC</span>
+                      <span className="text-cyan-400">{systemLoad.cpu}%</span>
+                   </div>
+                   <div className="w-full bg-gray-900 h-1 rounded-full overflow-hidden">
+                      <div className="bg-cyan-500 h-full transition-all duration-1000" style={{ width: `${systemLoad.cpu}%` }}></div>
+                   </div>
                 </div>
-                <div className="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
-                   <div className="bg-cyan-500 h-full w-[85%] animate-pulse"></div>
+                <div className="space-y-2">
+                   <div className="flex justify-between items-center text-[9px] font-bold">
+                      <span className="text-gray-500">NEURAL_LOAD</span>
+                      <span className="text-purple-400">{systemLoad.mem}%</span>
+                   </div>
+                   <div className="w-full bg-gray-900 h-1 rounded-full overflow-hidden">
+                      <div className="bg-purple-500 h-full transition-all duration-1000" style={{ width: `${systemLoad.mem}%` }}></div>
+                   </div>
                 </div>
              </div>
           </div>
         </aside>
 
         {/* Dynamic Workspace */}
-        <main className="flex-1 glass p-8 rounded-3xl border border-white/5 min-h-[650px] relative overflow-hidden bg-black/40">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[60px] rounded-full"></div>
+        <main className="flex-1 min-h-[700px] relative">
           
           {/* Overview View */}
           {activeTab === 'overview' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
-              <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                <span className="text-cyan-500">_</span>CORE_SYSTEM_METRICS
-              </h2>
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 border border-white/5 rounded-2xl bg-cyan-500/5 flex flex-col gap-4">
-                  <span className="text-[10px] text-cyan-500/60 uppercase tracking-widest font-bold">Total_Deployments</span>
-                  <div className="text-4xl font-bold text-white">{projects.length}</div>
-                </div>
-                <div className="p-6 border border-white/5 rounded-2xl bg-purple-500/5 flex flex-col gap-4">
-                  <span className="text-[10px] text-purple-500/60 uppercase tracking-widest font-bold">Neural_Connections</span>
-                  <div className="text-4xl font-bold text-white">{skills.length}</div>
-                </div>
-                <div className="p-6 border border-white/5 rounded-2xl bg-green-500/5 flex flex-col gap-4">
-                  <span className="text-[10px] text-green-500/60 uppercase tracking-widest font-bold">Active_Signals</span>
-                  <div className="text-4xl font-bold text-white">{unreadCount}</div>
-                </div>
+                <CyberPanel title="Total_Deployments" className="bg-cyan-500/5">
+                  <div className="flex items-end justify-between">
+                    <div className="text-5xl font-black text-white font-futuristic">0{projects.length}</div>
+                    <div className="text-[10px] text-cyan-500/60 font-bold mb-1">STABLE</div>
+                  </div>
+                </CyberPanel>
+                <CyberPanel title="Neural_Nodes" className="bg-purple-500/5">
+                  <div className="flex items-end justify-between">
+                    <div className="text-5xl font-black text-white font-futuristic">{skills.length}</div>
+                    <div className="text-[10px] text-purple-500/60 font-bold mb-1">SYNCED</div>
+                  </div>
+                </CyberPanel>
+                <CyberPanel title="Active_Signals" className="bg-green-500/5">
+                  <div className="flex items-end justify-between">
+                    <div className="text-5xl font-black text-white font-futuristic">{unreadCount}</div>
+                    <div className="text-[10px] text-green-500/60 font-bold mb-1">INBOUND</div>
+                  </div>
+                </CyberPanel>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
-                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-6 flex justify-between">
-                    <span>Recent_Signal_Intercepts</span>
-                    <button onClick={() => setActiveTab('messages')} className="text-[9px] hover:text-white transition-colors">VIEW_ALL</button>
-                  </h3>
-                  <div className="space-y-4">
+                <CyberPanel title="Neural_Data_Stream" className="h-[400px] flex flex-col">
+                  <div className="flex-1 space-y-6">
                     {messages.slice(0, 4).map(msg => (
-                      <div key={msg.id} className="flex justify-between items-center p-3 border-b border-white/5 hover:bg-white/5 transition-all group">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-gray-300 group-hover:text-cyan-400 transition-colors">{msg.senderName}</span>
-                          <span className="text-[9px] text-gray-600 font-mono">{new Date(msg.timestamp).toLocaleDateString()}</span>
+                      <div key={msg.id} className="flex justify-between items-center p-4 rounded-xl hover:bg-white/5 transition-all group cursor-pointer border border-transparent hover:border-white/5">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-black text-gray-200 group-hover:text-cyan-400 transition-colors uppercase tracking-widest">{msg.senderName}</span>
+                          <span className="text-[9px] text-gray-600 font-mono tracking-tighter">{new Date(msg.timestamp).toLocaleDateString()} // SOURCE: {msg.senderEmail}</span>
                         </div>
-                        <span className={`w-1.5 h-1.5 rounded-full ${msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' : msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_5px_#eab308]' : 'bg-blue-500 shadow-[0_0_5px_#3b82f6]'}`}></span>
+                        <div className="flex items-center gap-3">
+                           <span className="text-[9px] font-black text-gray-700">{msg.priority.toUpperCase()}</span>
+                           <span className={`w-2 h-2 rounded-full ${msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' : 'bg-blue-500 shadow-[0_0_8px_#3b82f6]'}`}></span>
+                        </div>
                       </div>
                     ))}
-                    {messages.length === 0 && <div className="text-[10px] text-gray-700 italic">Static. No inbound signals detected.</div>}
+                    {messages.length === 0 && <div className="text-[10px] text-gray-700 italic text-center py-20 uppercase tracking-widest font-black">Static. No inbound signals detected.</div>}
                   </div>
-                </div>
+                  <button onClick={() => setActiveTab('messages')} className="mt-6 w-full py-3 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.4em] transition-all rounded-lg border border-white/5">Expand_Comms_Buffer</button>
+                </CyberPanel>
 
-                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
-                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-6">Neural_Sync_Status</h3>
-                  <div className="space-y-6">
-                    {skills.slice(0, 4).map(skill => (
-                      <div key={skill.name} className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-bold text-gray-400">
-                          <span>{skill.name.toUpperCase()}</span>
-                          <span className="text-cyan-500">{skill.level}%</span>
+                <CyberPanel title="Neural_Logic_Status">
+                  <div className="space-y-8">
+                    {skills.slice(0, 5).map(skill => (
+                      <div key={skill.name} className="space-y-3">
+                        <div className="flex justify-between text-[10px] font-black tracking-widest text-gray-500 uppercase">
+                          <span>{skill.name}</span>
+                          <span className="text-cyan-500 font-mono">{skill.level}%</span>
                         </div>
-                        <div className="h-1 bg-gray-900 rounded-full overflow-hidden">
-                          <div className="h-full bg-cyan-500" style={{ width: `${skill.level}%` }}></div>
+                        <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]" style={{ width: `${skill.level}%` }}></div>
                         </div>
                       </div>
                     ))}
+                    <button onClick={() => setActiveTab('skills')} className="mt-4 w-full py-3 bg-white/5 hover:bg-white/10 text-[9px] font-black uppercase tracking-[0.4em] transition-all rounded-lg border border-white/5">Reconfigure_Matrix</button>
                   </div>
-                </div>
+                </CyberPanel>
               </div>
             </div>
           )}
 
           {/* Analytics View */}
           {activeTab === 'analytics' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
-              <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                <span className="text-cyan-500">_</span>TELEMETRY_CORE_STREAM
-              </h2>
-              
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-5 border border-white/10 rounded-2xl bg-cyan-500/5 group">
-                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Neural_Traffic</span>
-                  <div className="text-3xl font-bold text-white mb-1">12,842</div>
-                  <span className="text-[10px] text-green-400 font-mono tracking-tighter flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
-                    </svg>
-                    +12.4% vs prev_epoch
-                  </span>
-                </div>
-                <div className="p-5 border border-white/10 rounded-2xl bg-purple-500/5 group">
-                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Packet_Flow</span>
-                  <div className="text-3xl font-bold text-white mb-1">45,109</div>
-                  <span className="text-[10px] text-green-400 font-mono tracking-tighter flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
-                    </svg>
-                    +8.2% vs prev_epoch
-                  </span>
-                </div>
-                <div className="p-5 border border-white/10 rounded-2xl bg-red-500/5 group">
-                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Dissipation_Rate</span>
-                  <div className="text-3xl font-bold text-white mb-1">24.1%</div>
-                  <span className="text-[10px] text-red-400 font-mono tracking-tighter flex items-center gap-1">
-                    <svg className="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
-                    </svg>
-                    -3.1% (Stability Increased)
-                  </span>
-                </div>
-                <div className="p-5 border border-white/10 rounded-2xl bg-blue-500/5 group">
-                  <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest block mb-2">Sync_Duration</span>
-                  <div className="text-3xl font-bold text-white mb-1">04:12</div>
-                  <span className="text-[10px] text-blue-400 font-mono tracking-tighter">Avg_Session_Units</span>
-                </div>
+                {[
+                  { label: 'Neural_Traffic', value: '12,842', trend: '+12.4%', color: 'cyan' },
+                  { label: 'Packet_Flow', value: '45,109', trend: '+8.2%', color: 'purple' },
+                  { label: 'Stability_Index', value: '98.9%', trend: '+0.5%', color: 'green' },
+                  { label: 'Sync_Time', value: '04:12', trend: '-2.1%', color: 'blue' }
+                ].map((stat, i) => (
+                  <CyberPanel key={i} className={`bg-${stat.color}-500/5`}>
+                    <span className="text-[9px] text-gray-500 uppercase font-black tracking-widest block mb-3">{stat.label}</span>
+                    <div className="text-3xl font-black text-white font-futuristic mb-1">{stat.value}</div>
+                    <span className={`text-[9px] font-mono tracking-tighter flex items-center gap-1 ${stat.trend.startsWith('+') ? 'text-green-400' : 'text-blue-400'}`}>
+                      {stat.trend} vs PREV_EPOCH
+                    </span>
+                  </CyberPanel>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 p-8 border border-white/5 rounded-[2rem] bg-black/40 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-500/50 to-cyan-500/0 opacity-30"></div>
-                  <h3 className="text-xs font-bold text-cyan-500 uppercase tracking-[0.2em] mb-12 flex justify-between">
-                    <span>Active_Neural_Signal_Density</span>
-                    <span className="text-gray-600 font-mono text-[9px]">Last_24_Cycles</span>
-                  </h3>
-                  
-                  <div className="flex items-end justify-between h-48 gap-2">
+                <CyberPanel title="Neural_Flow_Density" className="lg:col-span-2">
+                  <div className="flex items-end justify-between h-56 gap-2">
                     {[35, 65, 45, 85, 95, 75, 45, 65, 55, 35, 25, 65, 85, 45, 35, 95, 85, 75, 55, 45, 65, 85, 95, 65].map((h, i) => (
                       <div key={i} className="flex-1 group relative">
                         <div 
-                          className={`w-full rounded-t-sm transition-all duration-700 delay-[${i * 20}ms] group-hover:bg-white bg-cyan-500/20`}
+                          className={`w-full rounded-t-sm transition-all duration-700 delay-[${i * 20}ms] group-hover:bg-cyan-400 bg-cyan-500/20`}
                           style={{ height: `${h}%` }}
                         >
-                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity font-mono">
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-[10px] text-cyan-400 opacity-0 group-hover:opacity-100 transition-all font-mono bg-black px-2 py-1 rounded border border-cyan-500/30">
                             {h}k
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-between mt-6 text-[8px] text-gray-700 font-mono border-t border-white/5 pt-4">
+                  <div className="flex justify-between mt-8 text-[9px] text-gray-600 font-black uppercase tracking-widest border-t border-white/5 pt-6">
                     <span>00:00</span>
-                    <span>06:00</span>
-                    <span>12:00</span>
-                    <span>18:00</span>
+                    <span>SYSTEM_PEAK</span>
                     <span>23:59</span>
                   </div>
-                </div>
+                </CyberPanel>
 
-                <div className="p-8 border border-white/5 rounded-[2rem] bg-black/40">
-                  <h3 className="text-xs font-bold text-purple-500 uppercase tracking-[0.2em] mb-8">Access_Geometries</h3>
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-gray-400">DESKTOP_ACCESS</span>
-                        <span className="text-purple-400">65%</span>
+                <CyberPanel title="Ingress_Geometries">
+                  <div className="space-y-10 py-4">
+                    {[
+                      { l: 'MANIFESTO_HUB', v: '65%', c: 'cyan' },
+                      { l: 'CORE_ENGINE', v: '28%', c: 'purple' },
+                      { l: 'NEURAL_DOCK', v: '7%', c: 'gray' }
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-3">
+                        <div className="flex justify-between text-[10px] font-black tracking-[0.2em]">
+                          <span className="text-gray-500">{item.l}</span>
+                          <span className={`text-${item.c}-400`}>{item.v}</span>
+                        </div>
+                        <div className="h-2 bg-gray-900 rounded-full overflow-hidden">
+                          <div className={`h-full bg-${item.c}-500 shadow-[0_0_10px_rgba(0,0,0,0.5)]`} style={{ width: item.v }}></div>
+                        </div>
                       </div>
-                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
-                        <div className="h-full bg-purple-500 shadow-[0_0_10px_#a855f7]" style={{ width: '65%' }}></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-gray-400">MOBILE_ACCESS</span>
-                        <span className="text-cyan-400">28%</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
-                        <div className="h-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]" style={{ width: '28%' }}></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-gray-400">NEURAL_DOCK</span>
-                        <span className="text-gray-300">7%</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden">
-                        <div className="h-full bg-gray-600" style={{ width: '7%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-12 p-5 border border-white/5 rounded-2xl bg-white/5">
-                    <span className="text-[9px] text-gray-600 uppercase font-black block mb-4 tracking-widest">Top_Ingress_Points</span>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-[10px] items-center">
-                        <span className="text-gray-500 truncate mr-2">/manifesto</span>
-                        <span className="text-white font-mono">14.2k</span>
-                      </div>
-                      <div className="flex justify-between text-[10px] items-center">
-                        <span className="text-gray-500 truncate mr-2">/hero</span>
-                        <span className="text-white font-mono">11.8k</span>
-                      </div>
-                      <div className="flex justify-between text-[10px] items-center">
-                        <span className="text-gray-500 truncate mr-2">/system_engine</span>
-                        <span className="text-white font-mono">4.1k</span>
+                    ))}
+                    
+                    <div className="mt-12 p-5 border border-white/10 rounded-2xl bg-black/40">
+                      <span className="text-[9px] text-gray-600 uppercase font-black block mb-4 tracking-[0.3em]">Access_Points</span>
+                      <div className="space-y-4">
+                        {['/manifesto: 14.2k', '/hero_root: 11.8k', '/system_env: 4.1k'].map((pt, i) => (
+                          <div key={i} className="flex justify-between text-[10px] font-mono items-center group cursor-default">
+                            <span className="text-gray-500 group-hover:text-cyan-500 transition-colors uppercase">{pt.split(':')[0]}</span>
+                            <span className="text-white font-black">{pt.split(':')[1]}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                </div>
+                </CyberPanel>
               </div>
             </div>
           )}
@@ -556,13 +558,13 @@ const AdminDashboard: React.FC = () => {
           {activeTab === 'projects' && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-center mb-10">
-                <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                  <span className="text-cyan-500">_</span>{editingProjectId ? 'RECONFIGURE_MODULE' : isAddingProject ? 'INITIATE_NEW_DEPLOYMENT' : 'DEPLOYED_MODULES'}
+                <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 font-futuristic">
+                  <span className="text-cyan-500">_</span>{editingProjectId ? 'RECONFIGURE_MODULE' : isAddingProject ? 'INIT_NEW_DEPLOYMENT' : 'DEPLOYED_SYSTEMS'}
                 </h2>
                 {!isAddingProject && (
                   <button 
                     onClick={() => setIsAddingProject(true)}
-                    className="text-[10px] bg-cyan-500 text-black px-6 py-2 font-bold hover:bg-cyan-400 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                    className="text-[10px] bg-cyan-600 text-black px-8 py-3 font-black hover:bg-cyan-500 transition-all uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(6,182,212,0.3)] rounded-lg"
                   >
                     + NEW_DEPLOYMENT
                   </button>
@@ -570,161 +572,68 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               {isAddingProject ? (
-                <form onSubmit={handleSaveProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto pb-20">
-                  {editingProjectId && (
-                    <div className="p-4 border border-cyan-500/30 bg-cyan-500/10 rounded-xl mb-6 flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">ACTIVE_EDIT_MODE: {projectForm.title}</span>
-                      <button type="button" onClick={resetProjectForm} className="text-[9px] text-gray-500 hover:text-white uppercase font-bold tracking-widest">Abort_Edit</button>
+                <CyberPanel title={editingProjectId ? 'EDIT_PROTOCOL' : 'CREATION_PROTOCOL'} className="max-w-4xl mx-auto pb-10">
+                  <form onSubmit={handleSaveProject} className="space-y-8 animate-in fade-in zoom-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Module_Title</label>
+                        <input required type="text" value={projectForm.title} onChange={(e) => setProjectForm({...projectForm, title: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Visual_Buffer_URI</label>
+                        <input required type="text" value={projectForm.image} onChange={(e) => setProjectForm({...projectForm, image: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 focus:bg-cyan-500/5 transition-all" />
+                      </div>
                     </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
                     <div className="space-y-2">
-                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Module_Title</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={projectForm.title}
-                        onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                        placeholder="Enter project name..."
-                      />
+                      <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">System_Abstract</label>
+                      <input required type="text" value={projectForm.description} onChange={(e) => setProjectForm({...projectForm, description: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 transition-all" />
                     </div>
+
                     <div className="space-y-2">
-                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Primary_Visual_URI</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={projectForm.image}
-                        onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                        placeholder="https://images.unsplash.com/..."
-                      />
+                      <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Technical_Specification</label>
+                      <textarea required rows={5} value={projectForm.fullDescription} onChange={(e) => setProjectForm({...projectForm, fullDescription: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-all resize-none leading-relaxed font-sans" />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Abstract_Summary</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={projectForm.description}
-                      onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                      placeholder="One-sentence hook..."
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Technical_Deep_Dive</label>
-                    <textarea 
-                      required
-                      rows={4}
-                      value={projectForm.fullDescription}
-                      onChange={(e) => setProjectForm({...projectForm, fullDescription: e.target.value})}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed"
-                      placeholder="Full project breakdown..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Uplink_Demo_URL</label>
-                      <input 
-                        type="text" 
-                        value={projectForm.liveLink}
-                        onChange={(e) => setProjectForm({...projectForm, liveLink: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                        placeholder="Live site link..."
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Uplink_URL</label>
+                        <input type="text" value={projectForm.liveLink} onChange={(e) => setProjectForm({...projectForm, liveLink: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm focus:outline-none focus:border-cyan-500/50 transition-all" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Source_Decryption_Key (URL)</label>
+                        <input type="text" value={projectForm.sourceLink} onChange={(e) => setProjectForm({...projectForm, sourceLink: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm focus:outline-none focus:border-cyan-500/50 transition-all" />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Source_Decryption_URL</label>
-                      <input 
-                        type="text" 
-                        value={projectForm.sourceLink}
-                        onChange={(e) => setProjectForm({...projectForm, sourceLink: e.target.value})}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                        placeholder="GitHub repository link..."
-                      />
+
+                    <div className="flex gap-6 pt-6">
+                      <button type="submit" className="flex-1 py-5 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.3em] text-[11px] transition-all shadow-[0_0_20px_rgba(6,182,212,0.4)] rounded-xl">COMMIT_DEPLOYMENT</button>
+                      <button type="button" onClick={resetProjectForm} className="px-10 py-5 border border-white/10 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-[11px] uppercase font-black tracking-[0.3em] transition-all rounded-xl">ABORT_SEQUENCE</button>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Technology_Stack (Comma separated)</label>
-                    <input 
-                      type="text" 
-                      value={projectForm.tags?.join(', ')}
-                      onChange={(e) => setProjectForm({...projectForm, tags: e.target.value.split(',').map(t => t.trim())})}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                      placeholder="React, TypeScript, Tailwind..."
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Development_Challenges (Comma separated)</label>
-                    <input 
-                      type="text" 
-                      value={projectForm.challenges?.join(', ')}
-                      onChange={(e) => setProjectForm({...projectForm, challenges: e.target.value.split(',').map(t => t.trim())})}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                      placeholder="Challenge 1, Challenge 2..."
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Solution_Matrix</label>
-                    <textarea 
-                      rows={3}
-                      value={projectForm.solution}
-                      onChange={(e) => setProjectForm({...projectForm, solution: e.target.value})}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed"
-                      placeholder="How were challenges overcome..."
-                    />
-                  </div>
-
-                  <div className="flex gap-4 pt-4">
-                    <button 
-                      type="submit"
-                      className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl"
-                    >
-                      {editingProjectId ? 'APPLY_RECONFIG' : 'COMMIT_TO_GRID'}
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={resetProjectForm}
-                      className="px-10 py-4 border border-white/10 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl"
-                    >
-                      ABORT
-                    </button>
-                  </div>
-                </form>
+                  </form>
+                </CyberPanel>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                   {projects.map(project => (
-                    <div key={project.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-white/5 rounded-xl hover:bg-white/5 transition-all group gap-4">
-                      <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 rounded bg-black overflow-hidden border border-cyan-500/20 group-hover:border-cyan-500 transition-colors">
-                          <img src={project.image} alt="" className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity grayscale" />
+                    <div key={project.id} className="group relative glass p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-cyan-500/5 hover:border-cyan-500/30 transition-all">
+                      <div className="flex items-center gap-8">
+                        <div className="w-20 h-20 rounded-xl bg-black overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-colors flex-shrink-0">
+                          <img src={project.image} alt="" className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-all grayscale group-hover:grayscale-0 scale-110 group-hover:scale-100" />
                         </div>
-                        <div>
-                          <div className="text-sm font-bold text-gray-200 group-hover:text-cyan-400 transition-colors">{project.title}</div>
-                          <div className="text-[10px] text-gray-600 font-mono mt-1">{project.tags.join(' // ')}</div>
+                        <div className="space-y-2">
+                          <div className="text-lg font-black text-gray-200 group-hover:text-cyan-400 transition-colors font-futuristic uppercase tracking-tight">{project.title}</div>
+                          <div className="flex flex-wrap gap-2">
+                            {project.tags.map(t => (
+                              <span key={t} className="text-[8px] font-black uppercase tracking-[0.2em] bg-white/5 px-2 py-0.5 rounded text-gray-500 group-hover:text-cyan-500/80 transition-colors">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex gap-3">
-                        <button 
-                          onClick={() => startEditProject(project)}
-                          className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest rounded-lg"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handlePurgeProject(project.id, project.title)}
-                          className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest rounded-lg"
-                        >
-                          Purge
-                        </button>
+                      <div className="flex gap-4">
+                        <button onClick={() => startEditProject(project)} className="px-6 py-2 border border-cyan-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 hover:text-black transition-all rounded-lg">Reconfig</button>
+                        <button onClick={() => handlePurgeProject(project.id, project.title)} className="px-6 py-2 border border-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-black transition-all rounded-lg">Purge</button>
                       </div>
                     </div>
                   ))}
@@ -735,147 +644,110 @@ const AdminDashboard: React.FC = () => {
 
           {/* Messages View */}
           {activeTab === 'messages' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full">
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-[700px]">
               <div className="flex justify-between items-center mb-10">
-                <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                  <span className="text-cyan-500">_</span>INBOUND_COMMUNICATIONS
+                <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 font-futuristic">
+                  <span className="text-cyan-500">_</span>NEURAL_SIGNAL_BUFFER
                 </h2>
-                <div className="flex bg-black/40 p-1 rounded-lg border border-white/10">
+                <div className="flex bg-black/60 p-1.5 rounded-xl border border-white/10">
                    <button 
                     onClick={() => { setMessageFilter('active'); setSelectedMessageId(null); }}
-                    className={`px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest transition-all rounded ${messageFilter === 'active' ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
+                    className={`px-6 py-2 text-[10px] uppercase font-black tracking-[0.2em] transition-all rounded-lg ${messageFilter === 'active' ? 'bg-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
                    >
                     Active
                    </button>
                    <button 
                     onClick={() => { setMessageFilter('archived'); setSelectedMessageId(null); }}
-                    className={`px-4 py-1.5 text-[10px] uppercase font-bold tracking-widest transition-all rounded ${messageFilter === 'archived' ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
+                    className={`px-6 py-2 text-[10px] uppercase font-black tracking-[0.2em] transition-all rounded-lg ${messageFilter === 'archived' ? 'bg-cyan-600 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-gray-500 hover:text-cyan-400'}`}
                    >
                     Archived
                    </button>
                 </div>
               </div>
               
-              <div className="flex flex-col md:flex-row h-[550px] border border-white/10 rounded-2xl overflow-hidden bg-black/60 shadow-2xl">
-                {/* Message List */}
-                <div className="w-full md:w-80 border-r border-white/10 flex flex-col bg-black/40">
-                  <div className="p-4 border-b border-white/10 bg-black/20 text-[10px] text-gray-500 uppercase font-bold tracking-widest flex justify-between">
-                    <span>{messageFilter.toUpperCase()} Signals</span>
-                    <span>{filteredMessages.length} Total</span>
+              <div className="flex-1 flex flex-col md:flex-row border border-white/10 rounded-3xl overflow-hidden bg-black/40 shadow-2xl">
+                {/* List */}
+                <div className="w-full md:w-96 border-r border-white/10 flex flex-col">
+                  <div className="p-5 border-b border-white/10 bg-white/5 text-[9px] text-gray-500 uppercase font-black tracking-[0.4em] flex justify-between">
+                    <span>{messageFilter}_SIGNALS</span>
+                    <span className="text-cyan-500">{filteredMessages.length}_TOTAL</span>
                   </div>
-                  <div className="flex-1 overflow-y-auto scrollbar-thin">
-                    {filteredMessages.length === 0 ? (
-                      <div className="p-12 text-center text-gray-700 text-[10px] uppercase font-bold tracking-widest">No {messageFilter} signals.</div>
-                    ) : (
-                      filteredMessages.map(msg => (
-                        <button 
-                          key={msg.id}
-                          onClick={() => handleMessageSelect(msg.id)}
-                          className={`w-full p-5 border-b border-white/5 text-left transition-all hover:bg-cyan-500/5 relative group flex items-stretch gap-4 ${selectedMessageId === msg.id ? 'bg-cyan-500/10' : ''}`}
-                        >
-                          {/* Priority Indicator Bar */}
-                          <div className={`w-1 flex-shrink-0 rounded-full my-1 ${
-                            msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' :
-                            msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' :
-                            'bg-blue-500 shadow-[0_0_8px_#3b82f6]'
-                          }`}></div>
-                          
-                          <div className="flex-1 min-w-0 py-1">
-                            {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-5 w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4] animate-pulse"></div>}
-                            <div className="flex justify-between items-start mb-1">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold tracking-widest transition-colors ${!msg.isRead && !msg.isArchived ? 'text-cyan-400' : 'text-gray-500'}`}>
-                                  {msg.senderName.toUpperCase()}
-                                </span>
-                              </div>
-                              <span className="text-[8px] text-gray-700">{new Date(msg.timestamp).toLocaleDateString()}</span>
-                            </div>
-                            <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead && !msg.isArchived ? 'text-white' : 'text-gray-500'}`}>{msg.subject}</div>
-                            <div className="text-[10px] text-gray-600 truncate leading-relaxed">{msg.body}</div>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    {filteredMessages.map(msg => (
+                      <button 
+                        key={msg.id}
+                        onClick={() => handleMessageSelect(msg.id)}
+                        className={`w-full p-6 border-b border-white/5 text-left transition-all hover:bg-cyan-500/5 relative group flex gap-6 items-stretch ${selectedMessageId === msg.id ? 'bg-cyan-500/10' : ''}`}
+                      >
+                        <div className={`w-1 flex-shrink-0 rounded-full my-1 ${
+                          msg.priority === 'high' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' :
+                          msg.priority === 'medium' ? 'bg-yellow-500 shadow-[0_0_8px_#eab308]' :
+                          'bg-blue-500 shadow-[0_0_8px_#3b82f6]'
+                        }`}></div>
+                        
+                        <div className="flex-1 min-w-0">
+                          {!msg.isRead && !msg.isArchived && <div className="absolute top-6 right-6 w-2 h-2 bg-cyan-500 rounded-full shadow-[0_0_10px_#06b6d4] animate-pulse"></div>}
+                          <div className="flex justify-between items-start mb-2">
+                             <span className={`text-[10px] font-black uppercase tracking-widest ${!msg.isRead ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                {msg.senderName}
+                             </span>
+                             <span className="text-[8px] text-gray-700 font-mono">{new Date(msg.timestamp).toLocaleDateString()}</span>
                           </div>
-                        </button>
-                      ))
-                    )}
+                          <div className={`text-xs font-bold truncate mb-1 ${!msg.isRead ? 'text-white' : 'text-gray-400'}`}>{msg.subject}</div>
+                          <div className="text-[10px] text-gray-600 truncate font-mono uppercase tracking-tighter opacity-60">{msg.body}</div>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredMessages.length === 0 && <div className="p-20 text-center text-gray-700 text-[10px] uppercase font-black tracking-widest">Buffer_Empty</div>}
                   </div>
                 </div>
 
-                {/* Message Detail */}
-                <div className="flex-1 flex flex-col bg-black/20">
+                {/* Detail */}
+                <div className="flex-1 flex flex-col bg-black/60 relative">
                   {selectedMessage ? (
-                    <div className="flex flex-col h-full animate-in fade-in duration-300">
-                      <div className="p-8 border-b border-white/10 flex flex-col gap-6 bg-black/40">
+                    <div className="flex flex-col h-full animate-in fade-in duration-500">
+                      <div className="p-10 border-b border-white/10 bg-white/5">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-xl font-bold text-white tracking-tight mb-4">{selectedMessage.subject}</h3>
-                            <div className="grid grid-cols-1 gap-y-2 text-[10px] font-mono">
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-600 uppercase">Origin:</span>
-                                <span className="text-cyan-500/80">{selectedMessage.senderName} &lt;{selectedMessage.senderEmail}&gt;</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-600 uppercase">Timestamp:</span>
-                                <span className="text-gray-400">{new Date(selectedMessage.timestamp).toLocaleString()}</span>
-                              </div>
+                          <div className="space-y-6">
+                            <h3 className="text-3xl font-black text-white tracking-tighter font-futuristic uppercase">{selectedMessage.subject}</h3>
+                            <div className="space-y-2">
+                               <div className="text-[10px] font-mono"><span className="text-gray-600 uppercase">Origin_Node:</span> <span className="text-cyan-500">{selectedMessage.senderName} &lt;{selectedMessage.senderEmail}&gt;</span></div>
+                               <div className="text-[10px] font-mono"><span className="text-gray-600 uppercase">Ingress_Time:</span> <span className="text-gray-400">{new Date(selectedMessage.timestamp).toLocaleString()}</span></div>
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-3">
-                            <span className="text-[8px] text-gray-600 uppercase font-bold tracking-widest">Adjust Priority:</span>
-                            <div className="flex bg-black/60 p-1 rounded-lg border border-white/10 gap-1">
-                              {(['low', 'medium', 'high'] as const).map((p) => (
-                                <button
-                                  key={p}
-                                  onClick={() => handlePriorityChange(selectedMessage.id, p)}
-                                  className={`px-3 py-1 text-[9px] uppercase font-black tracking-widest transition-all rounded ${
-                                    selectedMessage.priority === p 
-                                      ? p === 'high' ? 'bg-red-500 text-black shadow-[0_0_10px_#ef4444]' :
-                                        p === 'medium' ? 'bg-yellow-500 text-black shadow-[0_0_10px_#eab308]' :
-                                        'bg-blue-500 text-black shadow-[0_0_10px_#3b82f6]'
-                                      : 'text-gray-600 hover:text-white'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              ))}
-                            </div>
+                             <span className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-1">Priority_LVL</span>
+                             <div className="flex gap-1.5">
+                               {(['low', 'medium', 'high'] as const).map(p => (
+                                 <button key={p} onClick={() => handlePriorityChange(selectedMessage.id, p)} className={`w-8 h-8 flex items-center justify-center text-[9px] font-black uppercase rounded-lg border transition-all ${selectedMessage.priority === p ? 'bg-cyan-600 text-black border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'border-white/5 text-gray-600 hover:text-white hover:border-white/20'}`}>{p[0]}</button>
+                               ))}
+                             </div>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="p-10 flex-1 overflow-y-auto text-gray-300 text-sm leading-loose whitespace-pre-wrap font-light tracking-wide scrollbar-thin">
-                        <div className="mb-6 opacity-30 text-[10px] font-mono select-none">--- START_OF_TRANSMISSION ---</div>
-                        {selectedMessage.body}
-                        <div className="mt-6 opacity-30 text-[10px] font-mono select-none">--- END_OF_TRANSMISSION ---</div>
+                      <div className="p-10 flex-1 overflow-y-auto font-sans text-gray-300 text-base leading-relaxed tracking-wide space-y-6">
+                         <div className="text-[10px] font-mono text-cyan-500/40 select-none">--- START_ENCRYPTED_SIGNAL ---</div>
+                         <div className="whitespace-pre-wrap">{selectedMessage.body}</div>
+                         <div className="text-[10px] font-mono text-cyan-500/40 select-none">--- END_ENCRYPTED_SIGNAL ---</div>
                       </div>
 
-                      <div className="p-8 border-t border-white/10 bg-black/60 flex gap-6">
+                      <div className="p-10 border-t border-white/10 bg-black flex gap-6">
                         {!selectedMessage.isArchived && (
-                          <button 
-                            onClick={() => handleArchive(selectedMessage.id)}
-                            className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl"
-                          >
-                            ARCHIVE_TRANSMISSION
-                          </button>
+                          <button onClick={() => handleArchive(selectedMessage.id)} className="flex-1 py-5 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.3em] text-[11px] transition-all rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.2)]">ARCHIVE_SIGNAL</button>
                         )}
-                        <button 
-                          onClick={() => {
-                            deleteMessage(selectedMessage.id);
-                            setSelectedMessageId(null);
-                          }}
-                          className={`${selectedMessage.isArchived ? 'flex-1' : 'px-8'} py-4 border border-red-500/30 hover:border-red-500/60 text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl`}
-                        >
-                          PURGE_SIGNAL
-                        </button>
+                        <button onClick={() => { deleteMessage(selectedMessage.id); setSelectedMessageId(null); }} className={`${selectedMessage.isArchived ? 'flex-1' : 'px-10'} py-5 border border-red-500/30 hover:bg-red-500 hover:text-black text-red-500 text-[11px] uppercase font-black tracking-[0.3em] transition-all rounded-xl`}>PURGE_DATA</button>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-700 p-12 text-center">
-                      <div className="w-16 h-16 mb-8 text-cyan-500/10">
+                    <div className="flex-1 flex flex-col items-center justify-center opacity-20 group">
+                      <div className="w-24 h-24 mb-10 text-cyan-500 group-hover:scale-110 transition-transform duration-1000">
                         <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
                       </div>
-                      <span className="text-[11px] uppercase tracking-[0.6em] font-black opacity-40">Waiting for {messageFilter} signal selection</span>
-                      <div className="mt-4 w-32 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent"></div>
+                      <span className="text-[11px] uppercase tracking-[0.8em] font-black text-white">Awaiting_Neural_Selection</span>
+                      <div className="mt-6 w-48 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent"></div>
                     </div>
                   )}
                 </div>
@@ -885,19 +757,31 @@ const AdminDashboard: React.FC = () => {
 
           {/* Skills View */}
           {activeTab === 'skills' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-xl font-bold uppercase tracking-tighter mb-10 flex items-center gap-2 text-cyan-400">
-                <span className="text-cyan-500">_</span>NEURAL_SYSTOLIC_LEVELS
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
+              <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 font-futuristic">
+                <span className="text-cyan-500">_</span>NEURAL_MATRICES_SYNC
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {skills.map(skill => (
-                  <div key={skill.name} className="p-6 border border-white/5 rounded-2xl bg-black/40 group hover:border-cyan-500/20 transition-all">
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-sm font-bold uppercase tracking-widest text-gray-300 group-hover:text-cyan-400 transition-colors">{skill.name}</span>
-                      <span className="text-xs text-cyan-400 font-mono bg-cyan-500/10 px-2 py-1 rounded">{skill.level}%</span>
+                  <CyberPanel key={skill.name} className="bg-black/40">
+                    <div className="flex justify-between items-center mb-10">
+                      <div className="flex flex-col">
+                        <span className="text-lg font-black uppercase tracking-tight text-white font-futuristic">{skill.name}</span>
+                        <span className="text-[9px] text-gray-600 uppercase tracking-widest font-black">{skill.category}_SYSTEM</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-2xl font-black text-cyan-400 font-mono">{skill.level}%</span>
+                        <span className="text-[8px] text-cyan-900 font-black uppercase">SYNC_LEVEL</span>
+                      </div>
                     </div>
-                    <input type="range" min="0" max="100" value={skill.level} onChange={(e) => updateSkillLevel(skill.name, parseInt(e.target.value))} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
-                  </div>
+                    <div className="relative pt-6">
+                       <input type="range" min="0" max="100" value={skill.level} onChange={(e) => updateSkillLevel(skill.name, parseInt(e.target.value))} className="w-full h-2 bg-gray-900 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
+                       <div className="flex justify-between mt-4 text-[8px] text-gray-700 font-black uppercase tracking-widest">
+                          <span>UNINITIALIZED</span>
+                          <span>MASTER_LEVEL</span>
+                       </div>
+                    </div>
+                  </CyberPanel>
                 ))}
               </div>
             </div>
@@ -905,158 +789,113 @@ const AdminDashboard: React.FC = () => {
 
           {/* Core System View */}
           {activeTab === 'system' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-12 h-full overflow-y-auto pr-4 scrollbar-thin">
-              <div>
-                <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-cyan-400">
-                  <span className="text-cyan-500">_</span>NARRATIVE_CORE_DATA
-                </h2>
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-12 max-w-4xl h-full overflow-y-auto pr-6 custom-scrollbar">
+              <CyberPanel title="NARRATIVE_CORE_DUMP">
                 <div className="space-y-4">
-                   <label className="text-[10px] text-cyan-500 uppercase font-bold">System Bio / Narrative</label>
-                   <textarea value={bio} onChange={(e) => updateBio(e.target.value)} rows={4} className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed" />
+                   <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Identity_Manifesto</label>
+                   <textarea value={bio} onChange={(e) => updateBio(e.target.value)} rows={6} className="w-full bg-black/60 border border-white/10 rounded-2xl p-6 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-all resize-none leading-relaxed font-sans" />
                 </div>
-              </div>
+              </CyberPanel>
 
-              <div>
-                <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-purple-400">
-                  <span className="text-purple-500">_</span>NEURAL_ASSISTANT_CONFIG
-                </h2>
+              <CyberPanel title="AI_ASSISTANT_NEURAL_LOGIC" className="bg-purple-500/5">
                 <div className="space-y-4">
-                   <label className="text-[10px] text-purple-500 uppercase font-bold">AI_System_Instruction</label>
-                   <textarea 
-                    value={aiInstruction} 
-                    onChange={(e) => updateAiInstruction(e.target.value)} 
-                    rows={6} 
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 transition-colors resize-none leading-relaxed font-mono" 
-                    placeholder="Describe how the AI should behave..."
-                  />
-                  <p className="text-[9px] text-gray-600 uppercase">Warning: Changes to the neural logic will take effect immediately upon next user query.</p>
+                   <label className="text-[10px] text-purple-500 uppercase font-black tracking-widest ml-1">System_Heuristic_Prompt</label>
+                   <textarea value={aiInstruction} onChange={(e) => updateAiInstruction(e.target.value)} rows={8} className="w-full bg-black/60 border border-white/10 rounded-2xl p-6 text-sm text-gray-300 focus:outline-none focus:border-purple-500/50 transition-all font-mono leading-relaxed" placeholder="Describe the neural assistant personality and rules..." />
+                   <p className="text-[9px] text-gray-700 uppercase font-black tracking-widest px-1">Note: Logic updates are committed to the neural grid on next session handshake.</p>
                 </div>
-              </div>
+              </CyberPanel>
 
-              <div>
-                <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-cyan-400">
-                  <span className="text-cyan-500">_</span>NEURAL_COMM_LINKS
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-12">
+              <CyberPanel title="NEURAL_COMM_LINKS">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {socialLinks.map(link => (
-                    <div key={link.platform} className="p-5 border border-white/5 rounded-xl bg-black/20">
-                      <span className="text-[10px] text-cyan-500 uppercase font-bold mb-4 block">{link.platform} Module</span>
-                      <input type="text" value={link.url} onChange={(e) => updateSocialLink(link.platform, e.target.value)} className="w-full bg-black/60 border-b border-white/10 px-2 py-2 text-xs text-blue-300 focus:outline-none focus:border-cyan-500 font-mono" />
+                    <div key={link.platform} className="space-y-3">
+                      <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest ml-1">{link.platform}_UPLINK</label>
+                      <input type="text" value={link.url} onChange={(e) => updateSocialLink(link.platform, e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-5 py-4 text-xs text-blue-300 focus:outline-none focus:border-cyan-500 font-mono" />
                     </div>
                   ))}
                 </div>
-              </div>
+              </CyberPanel>
+              <div className="pb-20"></div>
             </div>
           )}
 
           {/* Profile View */}
           {activeTab === 'profile' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 max-w-2xl">
-              <h2 className="text-xl font-bold uppercase tracking-tighter mb-10 flex items-center gap-2 text-cyan-400">
-                <span className="text-cyan-500">_</span>IDENTITY_CORE_MANAGEMENT
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 max-w-3xl">
+              <h2 className="text-xl font-black uppercase tracking-tighter mb-10 flex items-center gap-2 font-futuristic">
+                <span className="text-cyan-500">_</span>IDENTITY_CORE_CONFIG
               </h2>
-              <form onSubmit={handleProfileUpdate} className="space-y-8">
-                <div className="flex items-center gap-8 mb-12 p-6 border border-cyan-500/10 rounded-2xl bg-cyan-500/5">
-                  <div 
-                    onClick={triggerFileInput}
-                    className="relative group cursor-pointer"
-                  >
-                    <img src={profileAvatar} alt="Avatar Preview" className="w-24 h-24 rounded-2xl object-cover border-2 border-cyan-500/30" />
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                       <svg className="w-6 h-6 text-cyan-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                       </svg>
-                       <span className="text-[8px] text-cyan-400 font-bold uppercase">Upload</span>
-                    </div>
-                  </div>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleImageUpload}
-                  />
-                  <div className="flex-1 space-y-4">
-                    <div>
-                      <label className="text-[10px] text-gray-500 uppercase block mb-1">Avatar_Source_URI</label>
-                      <div className="flex gap-2">
-                        <input 
-                          type="text" 
-                          value={profileAvatar.startsWith('data:') ? 'LOCAL_BUFFER_LOADED' : profileAvatar} 
-                          onChange={(e) => setProfileAvatar(e.target.value)} 
-                          className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-blue-300 focus:outline-none focus:border-cyan-500/50"
-                          placeholder="https://..."
-                        />
-                        <button 
-                          type="button"
-                          onClick={triggerFileInput}
-                          className="px-3 py-2 border border-cyan-500/30 text-[9px] uppercase font-bold text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                        >
-                          Local_File
-                        </button>
+              <CyberPanel className="bg-black/60">
+                <form onSubmit={handleProfileUpdate} className="space-y-12">
+                  <div className="flex flex-col md:flex-row items-center gap-12 pb-10 border-b border-white/5">
+                    <div onClick={triggerFileInput} className="relative group cursor-pointer w-40 h-40 flex-shrink-0">
+                      <div className="absolute inset-0 bg-cyan-500/20 rounded-3xl blur-xl group-hover:bg-cyan-500/40 transition-all opacity-0 group-hover:opacity-100"></div>
+                      <img src={profileAvatar} alt="Avatar" className="relative z-10 w-full h-full rounded-[2rem] object-cover border-2 border-white/10 group-hover:border-cyan-500 transition-all" />
+                      <div className="absolute inset-0 z-20 bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-[2rem]">
+                         <svg className="w-10 h-10 text-cyan-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                         </svg>
+                         <span className="text-[10px] text-cyan-400 font-black uppercase tracking-widest">UPLOAD_CORE</span>
                       </div>
                     </div>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                    
+                    <div className="flex-1 space-y-6 w-full">
+                       <div className="space-y-2">
+                          <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest ml-1">Core_Source_URI</label>
+                          <input type="text" value={profileAvatar.startsWith('data:') ? 'LOCAL_BUFFER_LOADED' : profileAvatar} onChange={(e) => setProfileAvatar(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-xs text-blue-300 focus:outline-none focus:border-cyan-500" placeholder="https://..." />
+                       </div>
+                       <div className="flex justify-end">
+                         <button type="button" onClick={triggerFileInput} className="px-6 py-2 border border-cyan-500/20 text-[9px] font-black uppercase rounded-lg text-cyan-500 hover:bg-cyan-500/10 transition-all tracking-[0.2em]">Manual_Handshake</button>
+                       </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Authorized_Entity_Name</label>
-                    <input 
-                      type="text" 
-                      value={profileName} 
-                      onChange={(e) => setProfileName(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">Authorized_Alias</label>
+                      <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-black tracking-widest ml-1">System_Role_Assignment</label>
+                      <input type="text" value={profileRole} onChange={(e) => setProfileRole(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-cyan-500 uppercase font-bold">System_Rank_Role</label>
-                    <input 
-                      type="text" 
-                      value={profileRole} 
-                      onChange={(e) => setProfileRole(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
-                    />
-                  </div>
-                </div>
 
-                <button 
-                  type="submit"
-                  className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-bold uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] rounded-xl"
-                >
-                  Apply_Identity_Changes
-                </button>
-              </form>
+                  <button type="submit" className="w-full py-5 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.3em] text-[11px] transition-all rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.2)]">APPLY_IDENTITY_SYNC</button>
+                </form>
+              </CyberPanel>
             </div>
           )}
 
           {/* Security Logs View */}
           {activeTab === 'logs' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full">
-               <h2 className="text-xl font-bold uppercase tracking-tighter mb-8 flex items-center gap-2 text-cyan-400">
-                  <span className="text-cyan-500">_</span>SECURITY_EVENT_STREAM
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full space-y-8">
+               <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 font-futuristic text-cyan-500">
+                  <span className="text-cyan-500">_</span>SYSTEM_EVENT_HISTORY
                 </h2>
-                <div className="flex-1 bg-black/60 rounded-2xl border border-white/5 p-6 font-mono text-xs overflow-y-auto space-y-3 custom-scrollbar">
+                <div className="flex-1 bg-black/80 rounded-[2rem] border border-cyan-500/10 p-10 font-mono text-xs overflow-y-auto space-y-4 custom-scrollbar relative shadow-2xl">
+                   <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.02)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
                    {logs.map((log, i) => (
-                     <div key={i} className="flex gap-4 group items-start">
-                        <span className="text-gray-600 flex-shrink-0">[{log.time}]</span>
-                        <div className="flex gap-2 items-start flex-1">
+                     <div key={i} className="flex gap-6 group items-start relative z-10">
+                        <span className="text-gray-700 flex-shrink-0 font-bold">[{log.time}]</span>
+                        <div className="flex gap-3 items-start flex-1">
                           {renderLogIcon(log.type)}
                           <span className={`flex-1 ${
-                            log.type === 'crit' ? 'text-red-500 animate-pulse' : 
+                            log.type === 'crit' ? 'text-red-500 font-black animate-pulse' : 
                             log.type === 'warn' ? 'text-yellow-500' : 
-                            'text-cyan-500/80'
+                            'text-cyan-500/70'
                           }`}>
-                            {log.msg}
+                            {log.type === 'crit' && '>> '} {log.msg}
                           </span>
                         </div>
                      </div>
                    ))}
-                   <div className="flex gap-4 animate-pulse items-center">
-                      <span className="text-gray-600 flex-shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                      <div className="flex gap-2 items-center">
-                        <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                        <span className="text-cyan-400">Listening for inbound transmissions...</span>
+                   <div className="flex gap-6 animate-pulse items-center relative z-10 pt-4 border-t border-white/5">
+                      <span className="text-gray-700 flex-shrink-0 font-bold">[{new Date().toLocaleTimeString()}]</span>
+                      <div className="flex gap-3 items-center">
+                        <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full shadow-[0_0_8px_#06b6d4]"></div>
+                        <span className="text-cyan-400 font-black uppercase tracking-widest">Listening_for_inbound_packets...</span>
                       </div>
                    </div>
                 </div>
@@ -1065,8 +904,8 @@ const AdminDashboard: React.FC = () => {
         </main>
       </div>
       
-      <footer className="mt-12 text-center text-[9px] text-gray-700 uppercase tracking-[0.5em] pb-8">
-        Terminal UI // Build 0x7E3 // Restricted Access Only
+      <footer className="mt-20 text-center text-[10px] text-gray-800 uppercase tracking-[0.6em] pb-10 font-black">
+        Terminal_v4.0.2 // (c) USMAN_OS_RESOURCES // RESTRICTED_ZONE
       </footer>
     </div>
   );
