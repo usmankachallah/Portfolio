@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { ContactMessage } from '../types';
+import { ContactMessage, Project } from '../types';
 
 type AdminTab = 'projects' | 'skills' | 'messages' | 'system' | 'profile' | 'logs';
 type MessageFilter = 'active' | 'archived';
@@ -11,9 +11,11 @@ const AdminDashboard: React.FC = () => {
   const [messageFilter, setMessageFilter] = useState<MessageFilter>('active');
   const [logs, setLogs] = useState<{ time: string; msg: string; type: 'info' | 'warn' | 'crit' }[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [isAddingProject, setIsAddingProject] = useState(false);
   
   const { 
     projects, 
+    addProject,
     deleteProject, 
     skills, 
     updateSkillLevel, 
@@ -30,6 +32,18 @@ const AdminDashboard: React.FC = () => {
     archiveMessage,
     updateMessagePriority
   } = useStore();
+
+  const [projectForm, setProjectForm] = useState<Partial<Project>>({
+    title: '',
+    description: '',
+    fullDescription: '',
+    image: '',
+    liveLink: '',
+    sourceLink: '',
+    tags: [],
+    challenges: [],
+    solution: ''
+  });
 
   const [profileName, setProfileName] = useState(session.user);
   const [profileRole, setProfileRole] = useState(session.role);
@@ -77,6 +91,33 @@ const AdminDashboard: React.FC = () => {
     const newLog = { 
       time: new Date().toLocaleTimeString(), 
       msg: `Signal priority recalibrated: ${id} -> ${priority.toUpperCase()}`, 
+      type: 'info' as const 
+    };
+    setLogs(prev => [newLog, ...prev]);
+  };
+
+  const handleAddProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newProject: Project = {
+      ...projectForm as Project,
+      id: `proj_${Date.now()}`,
+    };
+    addProject(newProject);
+    setIsAddingProject(false);
+    setProjectForm({
+      title: '',
+      description: '',
+      fullDescription: '',
+      image: '',
+      liveLink: '',
+      sourceLink: '',
+      tags: [],
+      challenges: [],
+      solution: ''
+    });
+    const newLog = { 
+      time: new Date().toLocaleTimeString(), 
+      msg: `New deployment successful: ${newProject.title}`, 
       type: 'info' as const 
     };
     setLogs(prev => [newLog, ...prev]);
@@ -171,31 +212,140 @@ const AdminDashboard: React.FC = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex justify-between items-center mb-10">
                 <h2 className="text-xl font-bold uppercase tracking-tighter flex items-center gap-2">
-                  <span className="text-cyan-500">_</span>DEPLOYED_MODULES
+                  <span className="text-cyan-500">_</span>{isAddingProject ? 'INITIATE_NEW_DEPLOYMENT' : 'DEPLOYED_MODULES'}
                 </h2>
-                <button className="text-[10px] bg-cyan-500 text-black px-6 py-2 font-bold hover:bg-cyan-400 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                  + NEW_DEPLOYMENT
-                </button>
+                {!isAddingProject && (
+                  <button 
+                    onClick={() => setIsAddingProject(true)}
+                    className="text-[10px] bg-cyan-500 text-black px-6 py-2 font-bold hover:bg-cyan-400 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                  >
+                    + NEW_DEPLOYMENT
+                  </button>
+                )}
               </div>
-              <div className="space-y-4">
-                {projects.map(project => (
-                  <div key={project.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-white/5 rounded-xl hover:bg-white/5 transition-all group gap-4">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded bg-black overflow-hidden border border-cyan-500/20 group-hover:border-cyan-500 transition-colors">
-                        <img src={project.image} alt="" className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity grayscale" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-gray-200 group-hover:text-cyan-400 transition-colors">{project.title}</div>
-                        <div className="text-[10px] text-gray-600 font-mono mt-1">{project.tags.join(' // ')}</div>
-                      </div>
+
+              {isAddingProject ? (
+                <form onSubmit={handleAddProject} className="space-y-6 animate-in fade-in zoom-in duration-300 max-w-4xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Module_Title</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={projectForm.title}
+                        onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                        placeholder="Enter project name..."
+                      />
                     </div>
-                    <div className="flex gap-3">
-                      <button className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest">Configure</button>
-                      <button onClick={() => deleteProject(project.id)} className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest">Purge</button>
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Primary_Visual_URI</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={projectForm.image}
+                        onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                        placeholder="https://images.unsplash.com/..."
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Abstract_Summary</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={projectForm.description}
+                      onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                      placeholder="One-sentence hook..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Technical_Deep_Dive</label>
+                    <textarea 
+                      required
+                      rows={4}
+                      value={projectForm.fullDescription}
+                      onChange={(e) => setProjectForm({...projectForm, fullDescription: e.target.value})}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed"
+                      placeholder="Full project breakdown..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Uplink_Demo_URL</label>
+                      <input 
+                        type="text" 
+                        value={projectForm.liveLink}
+                        onChange={(e) => setProjectForm({...projectForm, liveLink: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                        placeholder="Live site link..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-cyan-500 uppercase font-bold">Source_Decryption_URL</label>
+                      <input 
+                        type="text" 
+                        value={projectForm.sourceLink}
+                        onChange={(e) => setProjectForm({...projectForm, sourceLink: e.target.value})}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                        placeholder="GitHub repository link..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-cyan-500 uppercase font-bold">Technology_Stack (Comma separated)</label>
+                    <input 
+                      type="text" 
+                      value={projectForm.tags?.join(', ')}
+                      onChange={(e) => setProjectForm({...projectForm, tags: e.target.value.split(',').map(t => t.trim())})}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50"
+                      placeholder="React, TypeScript, Tailwind..."
+                    />
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button 
+                      type="submit"
+                      className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[11px] transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] rounded-xl"
+                    >
+                      COMMIT_TO_GRID
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setIsAddingProject(false)}
+                      className="px-10 py-4 border border-white/10 hover:border-red-500/50 text-gray-500 hover:text-red-500 text-[11px] uppercase font-black tracking-[0.2em] transition-all rounded-xl"
+                    >
+                      ABORT
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  {projects.map(project => (
+                    <div key={project.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-white/5 rounded-xl hover:bg-white/5 transition-all group gap-4">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded bg-black overflow-hidden border border-cyan-500/20 group-hover:border-cyan-500 transition-colors">
+                          <img src={project.image} alt="" className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity grayscale" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-gray-200 group-hover:text-cyan-400 transition-colors">{project.title}</div>
+                          <div className="text-[10px] text-gray-600 font-mono mt-1">{project.tags.join(' // ')}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button className="px-4 py-2 border border-cyan-500/30 text-[10px] hover:bg-cyan-500/10 text-cyan-500 transition-colors uppercase font-bold tracking-widest">Configure</button>
+                        <button onClick={() => deleteProject(project.id)} className="px-4 py-2 border border-red-500/30 text-[10px] text-red-500 hover:bg-red-500/10 transition-colors uppercase font-bold tracking-widest">Purge</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

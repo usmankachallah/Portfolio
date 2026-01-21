@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { Project, Skill, ContactMessage } from '../types';
 import { PROJECTS as INITIAL_PROJECTS, SKILLS as INITIAL_SKILLS, USMAN_BIO } from '../constants';
@@ -30,6 +31,7 @@ interface AppState {
   
   // Actions
   setProjects: (projects: Project[]) => void;
+  addProject: (project: Project) => void;
   deleteProject: (id: string) => void;
   setSkills: (skills: Skill[]) => void;
   updateSkillLevel: (name: string, level: number) => void;
@@ -84,7 +86,7 @@ export const useStore = create<AppState>((set) => ({
     { platform: 'GitHub', url: 'https://github.com/usmankachallah', icon: 'github' },
     { platform: 'X', url: 'https://x.com/kachallahfx', icon: 'twitter' },
   ],
-  isAdminView: true,
+  isAdminView: false,
   isAuthenticated: false,
   isChatOpen: false,
   theme: 'futuristic',
@@ -97,6 +99,7 @@ export const useStore = create<AppState>((set) => ({
   },
 
   setProjects: (projects) => set({ projects }),
+  addProject: (project) => set((state) => ({ projects: [project, ...state.projects] })),
   deleteProject: (id) => set((state) => ({
     projects: state.projects.filter((p) => p.id !== id)
   })),
