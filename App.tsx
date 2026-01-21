@@ -1,17 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Origins from './components/Origins';
-import Manifesto from './components/Manifesto';
-import System from './components/System';
-import Connect from './components/Connect';
-import ProjectModal from './components/ProjectModal';
-import AiChat from './components/AiChat';
-import Background from './components/Background';
-import AdminDashboard from './components/AdminDashboard';
-import AdminLogin from './components/AdminLogin';
-import { useStore } from './store/useStore';
+import React, { useEffect } from 'react';
+import Navbar from './components/Navbar.tsx';
+import Hero from './components/Hero.tsx';
+import Origins from './components/Origins.tsx';
+import Manifesto from './components/Manifesto.tsx';
+import System from './components/System.tsx';
+import Connect from './components/Connect.tsx';
+import ProjectModal from './components/ProjectModal.tsx';
+import AiChat from './components/AiChat.tsx';
+import Background from './components/Background.tsx';
+import AdminDashboard from './components/AdminDashboard.tsx';
+import AdminLogin from './components/AdminLogin.tsx';
+import { useStore } from './store/useStore.ts';
 
 const App: React.FC = () => {
   const { 
@@ -25,19 +25,12 @@ const App: React.FC = () => {
   } = useStore();
 
   useEffect(() => {
-    // Simple path-based routing detection
     const checkPath = () => {
       const path = window.location.pathname;
-      
-      // Allow root and /admin paths
       if (path === '/admin') {
         if (!isAdminView) toggleAdmin();
       } else if (path === '/' || path === '') {
-        if (isAdminView) toggleAdmin(); // Return to home if at root
-      } else {
-        // Fallback to home for any other paths (effectively closing the 404 page)
         if (isAdminView) toggleAdmin();
-        window.history.replaceState({}, '', '/');
       }
     };
 
@@ -46,7 +39,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', checkPath);
   }, [isAdminView, toggleAdmin]);
 
-  // Admin View Logic with Login Protection
   if (isAdminView) {
     if (!isAuthenticated) {
       return <AdminLogin />;

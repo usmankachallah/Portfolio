@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { getAiResponse } from '../services/geminiService';
-import { ChatMessage } from '../types';
-import { useStore } from '../store/useStore';
+import { getAiResponse } from '../services/geminiService.ts';
+import { ChatMessage } from '../types.ts';
+import { useStore } from '../store/useStore.ts';
 
 interface Props {
   isOpen: boolean;
@@ -39,7 +39,6 @@ const AiChat: React.FC<Props> = ({ isOpen, onToggle }) => {
 
   return (
     <>
-      {/* Trigger Button */}
       <button 
         onClick={onToggle}
         className="fixed bottom-8 right-8 z-[60] bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all transform hover:scale-110 neo-shadow animate-bounce"
@@ -49,7 +48,6 @@ const AiChat: React.FC<Props> = ({ isOpen, onToggle }) => {
         </svg>
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-28 right-8 z-[60] w-[calc(100%-4rem)] md:w-full max-w-[360px] h-[500px] glass rounded-3xl shadow-2xl overflow-hidden border border-blue-500/20 flex flex-col animate-in slide-in-from-bottom-5">
           <div className="p-4 border-b border-white/10 flex justify-between items-center bg-blue-600/10">

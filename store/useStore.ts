@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
-import { Project, Skill, ContactMessage } from '../types';
-import { PROJECTS as INITIAL_PROJECTS, SKILLS as INITIAL_SKILLS, USMAN_BIO } from '../constants';
+import { Project, Skill, ContactMessage } from '../types.ts';
+import { PROJECTS as INITIAL_PROJECTS, SKILLS as INITIAL_SKILLS, USMAN_BIO } from '../constants.tsx';
 
 interface SocialLink {
   platform: string;

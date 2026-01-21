@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { useStore } from '../store/useStore';
+import { useStore } from '../store/useStore.ts';
 
 const Hero: React.FC = () => {
   const theme = useStore(state => state.theme);
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-      {/* Subtle radial lights only in futuristic mode */}
       {theme === 'futuristic' && (
         <>
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 blur-[120px] rounded-full animate-pulse"></div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useStore } from '../store/useStore';
+import { useStore } from '../store/useStore.ts';
 
 interface Props {
   onChatToggle: () => void;
@@ -32,7 +32,6 @@ const Navbar: React.FC<Props> = ({ onChatToggle, onAdminToggle, isAdminView }) =
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Theme Toggle */}
           <button 
             onClick={toggleTheme}
             className={`p-2 rounded-xl transition-all border ${
